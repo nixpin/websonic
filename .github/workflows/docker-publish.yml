@@ -2,8 +2,8 @@ name: Docker Build and Publish
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch: # Enable manual triggers
+    branches: [ "master", "dev" ]
+  workflow_dispatch:
 
 jobs:
   build-and-push:
@@ -27,7 +27,11 @@ jobs:
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/websonic
           tags: |
-            type=raw,value=latest
+            # Set 'latest' tag for 'master' branch
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+            # Set 'dev' tag for 'dev' branch
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            # Always include a short SHA tag
             type=sha,format=short
 
       - name: Build and push Docker image
@@ -38,5 +42,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha # Use GitHub Actions cache
+          cache-from: type=gha
           cache-to: type=gha,mode=max
