@@ -22,34 +22,26 @@ export class WebSonicApp extends BaseElement {
   render() {
     return html`
       <websonic-shell>
-        <!-- Background Effects layer (global) -->
-        <div slot="main" class="absolute inset-0 overflow-hidden -z-10 bg-[var(--color-bg-base)]">
-          <div class="absolute top-[15%] left-[10%] w-[50%] h-[50%] bg-[var(--color-surface-glow-primary)] blur-[150px] rounded-full opacity-60"></div>
-          <div class="absolute bottom-[15%] right-[10%] w-[50%] h-[50%] bg-[var(--color-surface-glow-secondary)] blur-[150px] rounded-full opacity-40"></div>
+        <div slot="main" class="flex flex-col items-center justify-end w-full h-full">
+          <!-- Central Audio Equipment Interface -->
+          <div class="relative w-full max-w-5xl flex justify-center items-end">
+             <img src="/theme/amp.webp" class="w-full h-auto drop-shadow-[0_-5px_35px_rgba(0,0,0,0.8)]" alt="Amplifier">
+             
+             <!-- Dynamic Screen / Library Area (tablet style) -->
+             <div class="absolute inset-0 flex items-center justify-center -translate-y-[15%]">
+                <!-- Overlay content (Routes/Library) -->
+                <div class="w-[45%] h-[40%] bg-stone-900/10 rounded-sm">
+                   ${this.routes.outlet()}
+                </div>
+             </div>
+          </div>
         </div>
 
-        <div slot="header" class="flex items-center gap-4 w-full">
-           <h1 class="text-2xl font-black italic tracking-tighter uppercase mr-auto">
-              <span class="bg-gradient-to-r from-[var(--color-accent-primary)] to-[var(--color-accent-secondary)] bg-clip-text text-transparent">
-                WEBSONIC
-              </span>
-           </h1>
-           <!-- Quick search would go here -->
-        </div>
-
-        <div slot="sidebar" class="flex flex-col p-6 gap-2">
-           <nav class="flex flex-col gap-1">
-             <a href="/" class="p-2 hover:bg-white/5 rounded-lg transition-colors">Browse</a>
-             <a href="/library" class="p-2 hover:bg-white/5 rounded-lg transition-colors">Library</a>
-           </nav>
-        </div>
-
-        <div slot="main" class="max-w-7xl mx-auto w-full relative z-10">
-           ${this.routes.outlet()}
-        </div>
-
-        <div slot="player" class="flex items-center justify-center h-full">
-           <p class="text-stone-500 italic">Ready for music...</p>
+        <div slot="player" class="flex items-center justify-center w-full px-12">
+           <!-- Playback controls will be integrated into the desk surface -->
+           <p class="text-stone-400 font-mono text-sm tracking-widest uppercase opacity-50">
+             System Ready / WebSonic Audio Engine
+           </p>
         </div>
       </websonic-shell>
     `;

@@ -3,95 +3,119 @@ import { customElement } from 'lit/decorators.js';
 
 /**
  * WebSonic Shell
- * Provides the core layout structure with slots for modularity:
- * - sidebar: Left navigation area
- * - main: Primary content view
- * - player: Bottom playback bar
- * - header: Top branding/search area (optional)
+ * Implements a unique room-based layout with a wooden desk foreground.
+ * - main: Area above the desk for the player interface/library
+ * - player: Slot for controls, integrated into the desk surface
  */
 @customElement('websonic-shell')
 export class WebSonicShell extends LitElement {
   static styles = css`
     :host {
-      display: grid;
-      grid-template-areas:
-        "sidebar header"
-        "sidebar main"
-        "player player";
-      grid-template-columns: auto 1fr;
-      grid-template-rows: auto 1fr auto;
+      display: block;
+      position: relative;
       height: 100vh;
+      width: 100vw;
       overflow: hidden;
-      background-color: var(--color-stone-950);
+      /* Main background - cozy room atmosphere */
+      background: #000 url('/theme/bg.webp') no-repeat center center fixed;
+      background-size: cover;
       color: var(--color-stone-100);
+      font-family: var(--font-sans);
     }
 
-    aside {
-      grid-area: sidebar;
-      width: 280px;
-      background-color: var(--color-stone-900);
-      border-right: 1px solid var(--color-stone-800);
+    /* Primary content area (Holds the Amp, stuck to the bottom) */
+    main {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40; /* Above the desk layers */
       display: flex;
       flex-direction: column;
-      z-index: var(--z-index-sticky);
-    }
-
-    header {
-      grid-area: header;
-      height: 64px;
-      background-color: var(--color-stone-950);
-      border-bottom: 1px solid var(--color-stone-800);
-      display: flex;
       align-items: center;
-      padding: 0 var(--spacing-6);
+      justify-content: flex-end; /* Ground the amplifier */
+      overflow: hidden;
+      pointer-events: none; /* Pass events through to desk controls if needed */
     }
 
-    main {
-      grid-area: main;
-      overflow-y: auto;
-      padding: var(--spacing-8);
-      /* Custom scrollbar for better aesthetics */
-      scrollbar-width: thin;
-      scrollbar-color: var(--color-stone-700) transparent;
+    main > * {
+      pointer-events: auto; /* Re-enable for actual content */
     }
 
-    footer {
-      grid-area: player;
-      height: 96px;
-      background-color: var(--color-stone-900);
-      border-top: 1px solid var(--color-stone-800);
-      backdrop-filter: var(--backdrop-premium);
-      z-index: var(--z-index-sticky);
+    /* Desk foreground structure */
+    .desk {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 294px; /* Specific height for the desk foreground as requested */
+      z-index: 20;
+    }
+
+    /* Interactive overlay for player controls on the desk */
+    .desk-content {
+      position: absolute;
+      inset: 0;
+      pointer-events: auto;
+      z-index: 30;
+      display: flex;
+      align-items: flex-end;
+      padding-bottom: 20px;
+    }
+
+    .desk-repeat {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      background: url('/theme/desk-down-repeat.webp') repeat-x bottom center;
+      background-size: auto 100%;
+    }
+
+    .desk-left {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 306px; /* Scaled width of the left wooden edge */
+      height: 100%;
+      background: url('/theme/desk-left.webp') no-repeat left bottom;
+      background-size: contain;
+    }
+
+    .desk-right {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 310px; /* Scaled width of the right wooden edge */
+      height: 100%;
+      background: url('/theme/desk-right.webp') no-repeat right bottom;
+      background-size: contain;
     }
 
     @media (max-width: 1024px) {
-      :host {
-        grid-template-areas:
-          "header"
-          "main"
-          "player";
-        grid-template-columns: 1fr;
-      }
-      aside {
-        display: none; /* Mobile navigation would be a drawer */
+      .desk-left, .desk-right {
+        width: 30%; /* Responsive scaling for smaller screens */
       }
     }
   `;
 
   render() {
     return html`
-      <aside>
-        <slot name="sidebar"></slot>
-      </aside>
-      <header>
-        <slot name="header"></slot>
-      </header>
       <main>
         <slot name="main"></slot>
       </main>
-      <footer>
-        <slot name="player"></slot>
-      </footer>
+
+      <div class="desk">
+        <div class="desk-repeat"></div>
+        <div class="desk-left"></div>
+        <div class="desk-right"></div>
+        
+        <div class="desk-content">
+          <slot name="player"></slot>
+        </div>
+      </div>
     `;
   }
 }
