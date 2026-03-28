@@ -7,11 +7,12 @@ Project is on early development stage!!
 ## 🛠 Road Map
 - [x] Base Layout (Analog Equipment UI)
 - [x] Auth (Subsonic Integration)
-- [ ] Music Library & Browsing
-- [ ] Real-time Playback Controls
-- [ ] Queue Management
-- [ ] Playlist Management
-- [ ] Multi-server Support
+- [ ] Music Library & Browsing (Filter by Artists, Albums, Genres, Search)
+- [ ] Queue Management (Add, Remove, Reorder, Play)
+- [ ] Now Playing (Album Art, Song Info, Progress Bar)
+- [ ] Real-time Playback Controls (Play, Pause, Next, Previous)
+- [ ] Playlist Management (Create, Edit, Delete, Play)
+- [ ] Multi-server Support (Add, Remove, Switch)
 
 ## 📦 Getting Started
 
