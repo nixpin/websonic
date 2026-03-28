@@ -8,10 +8,7 @@ import { customElement, property } from 'lit/decorators.js';
  */
 @customElement('websonic-player-display')
 export class WebSonicPlayerDisplay extends LitElement {
-  @property({ type: String }) trackTitle = 'Bohemian Rhapsody';
-  @property({ type: String }) artistName = 'Queen';
-  @property({ type: String }) albumName = 'A Night at the Opera';
-  @property({ type: String }) coverArt = '/theme/screenshot-player.webp'; // Placeholder or actual art
+  @property({ type: Boolean }) hideControls = false;
 
   static styles = css`
     :host {
@@ -31,16 +28,21 @@ export class WebSonicPlayerDisplay extends LitElement {
       
       /* High-end matte charcoal material */
       background: linear-gradient(145deg, #1a1a1c, #0a0a0b);
-      border-radius: 20px;
+      border-radius: 25px; /* (10px screen radius + 15px bezel width) */
       
-      /* External and Internal depth shadows */
-      box-shadow: 
-        0 15px 35px rgba(0, 0, 0, 0.7),
-        inset 0 2px 4px rgba(255, 255, 255, 0.05),
-        inset 0 -2px 10px rgba(0, 0, 0, 0.8);
-      
+      /* 
+         Professional "Hollow Box" Masking Technique 
+         This punches a perfect rounded hole with the matching border radius.
+      */
+      padding: 15px; /* Bezel width */
+      -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+
       /* Distinct golden/bronze metallic rim highlight */
-      border: 2px solid #8c734b; /* Warm antique gold */
+      border: 2px solid #8c734b;
       
       /* External shadows and Internal rim lighting for metallic effect */
       box-shadow: 
@@ -49,15 +51,16 @@ export class WebSonicPlayerDisplay extends LitElement {
         inset 0 -2px 10px rgba(0, 0, 0, 0.9);      /* Depth shadow */
     }
 
-    /* Inner screen bevel/gasket */
-    .tablet-frame::after {
-      content: '';
+    /* Inner screen bevel/gasket as a separate layer to avoid masking */
+    .gasket {
       position: absolute;
       inset: 12px;
+      z-index: 11;
       border: 1px solid rgba(0, 0, 0, 0.4);
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 12px;
+      background: none;
+      border-radius: 13px;
       box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
     }
 
     /* High-resolution display area */
@@ -72,82 +75,20 @@ export class WebSonicPlayerDisplay extends LitElement {
       z-index: 5;
     }
 
-    /* Top Info Screen */
+    /* Top Info Screen / Content Area */
     .screen-top {
-      flex: 1.4;
+      flex: 1; /* Default to fill available space */
       background: linear-gradient(to bottom, #2a2a2c, #1a1a1c);
-      padding: 24px;
-      display: flex;
-      gap: 20px;
-      position: relative;
-    }
-
-    .cover-art {
-      width: 140px;
-      height: 140px;
-      background: #000;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 4px;
-    }
-
-    .track-info {
-      flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-    }
-
-    .title {
-      font-size: 24px;
-      font-weight: 700;
-      color: #ede0c4; /* Warm cream */
-      margin-bottom: 4px;
-    }
-
-    .artist, .album {
-      font-size: 16px;
-      color: #9f9172; /* Muted amber */
-      opacity: 0.8;
-    }
-
-    /* Progress bar */
-    .progress-container {
-      position: absolute;
-      bottom: 20px;
-      left: 24px;
-      right: 24px;
-    }
-
-    .progress-bar {
-      height: 4px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 2px;
       position: relative;
-    }
-
-    .progress-fill {
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      width: 40%;
-      background: #d4af37; /* Gold/Amber */
-      box-shadow: 0 0 10px #d4af37;
-    }
-
-    .time-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      font-family: monospace;
-      color: #9f9172;
-      margin-top: 6px;
+      overflow: hidden;
+      z-index: 5;
     }
 
     /* Bottom Control Panel (Wooden texture) */
     .control-panel {
-      flex: 1;
+      height: 120px; /* Fixed height for the hardware panel */
       background: #2b1d16; /* Fallback wood color */
       border-top: 1px solid rgba(0,0,0,0.5);
       position: relative;
@@ -202,37 +143,26 @@ export class WebSonicPlayerDisplay extends LitElement {
   render() {
     return html`
       <div class="tablet-frame"></div>
+      <div class="gasket"></div>
       <div class="content">
         <div class="screen-top">
-          <div class="cover-art"></div>
-          <div class="track-info">
-            <div class="title">${this.trackTitle}</div>
-            <div class="artist">${this.artistName}</div>
-            <div class="album">${this.albumName}</div>
-          </div>
-          
-          <div class="progress-container">
-            <div class="progress-bar">
-              <div class="progress-fill"></div>
-            </div>
-            <div class="time-labels">
-              <span>2:14</span>
-              <span>5:35</span>
-            </div>
-          </div>
+          <!-- Main display slot for digital views -->
+          <slot></slot>
         </div>
 
-        <div class="control-panel">
-           <div class="btn btn-skip">
-             <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-           </div>
-           <div class="btn btn-play">
-             <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-           </div>
-           <div class="btn btn-skip">
-             <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-           </div>
-        </div>
+        ${!this.hideControls ? html`
+          <div class="control-panel">
+            <div class="btn btn-skip">
+              <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </div>
+            <div class="btn btn-play">
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <div class="btn btn-skip">
+              <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+            </div>
+          </div>
+        ` : ''}
       </div>
     `;
   }
