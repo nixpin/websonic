@@ -14,10 +14,10 @@ export class WebSonicApp extends BaseElement {
   // Global Subsonic Client Context
   @provide({ context: subsonicContext })
   @state() 
-  private subsonicClient: SubsonicClient | null = null;
+  subsonicClient: SubsonicClient | null = null;
 
   // Externalized router configuration
-  private routes = createRouter(this);
+  routes = createRouter(this);
 
   render() {
     return html`

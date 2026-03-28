@@ -80,7 +80,7 @@ export class SubsonicClient {
   }
 
   // Songs searching/filtering
-  async getSongs(artistId?: string, albumId?: string) {
+  async getSongs(_artistId?: string, _albumId?: string) {
     // In subsonic searching for all songs usually means searching with a broad query or browsing artists/albums.
     // However, some versions support getRandomSongs.
     return this.fetch('getRandomSongs', { size: '100' });
