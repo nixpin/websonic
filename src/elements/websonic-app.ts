@@ -4,11 +4,14 @@ import { provide } from '@lit/context';
 import { createRouter } from '../router';
 import { BaseElement } from './base-element';
 import { subsonicContext } from '../context/subsonic-context';
-import type { SubsonicClient } from '../sdk/subsonic';
+import { SubsonicClient } from '../sdk/subsonic';
+import { AuthService } from '../services/auth-service';
 
-// Registration of layout components
+// Registration of layout and view components
 import '../components/websonic-shell';
 import '../components/websonic-player-display';
+import '../views/auth-view.ts';
+import '../views/dashboard-view.ts';
 
 @customElement('websonic-app')
 export class WebSonicApp extends BaseElement {
@@ -17,26 +20,68 @@ export class WebSonicApp extends BaseElement {
   @state()
   subsonicClient: SubsonicClient | null = null;
 
+  @state() private isAuthenticated = false;
+
   // Externalized router configuration
-  routes = createRouter(this);
+  routes = createRouter(this as any);
+
+  async connectedCallback() {
+    super.connectedCallback();
+    
+    // Initial check
+    this.isAuthenticated = AuthService.isAuthenticated();
+
+    // Listen for auth changes from anywhere in the app
+    window.addEventListener('websonic-auth-changed', () => {
+       this.isAuthenticated = AuthService.isAuthenticated();
+       if (this.isAuthenticated) {
+         const config = AuthService.getActiveConfig();
+         if (config) this.subsonicClient = new SubsonicClient(config);
+       }
+    });
+    
+    // Always initialize the client if we have a config
+    const config = AuthService.getActiveConfig();
+    if (config) {
+      this.subsonicClient = new SubsonicClient(config);
+    }
+  }
+
+  async firstUpdated() {
+    // We handle authentication via a centered overlay in the render() method,
+    // so no programmatic redirection is needed here.
+  }
 
   render() {
     return html`
       <websonic-shell>
-        <div slot="main" class="flex flex-col items-center justify-end w-full h-full">
-          <!-- Central Audio Equipment Interface -->
+        <div slot="main" class="relative w-full h-full flex flex-col items-center justify-end overflow-hidden">
+          
+          <!-- Bottom Layer: The Physical Jukebox Interface -->
           <div class="relative w-full max-w-6xl flex justify-center items-end">
-             <img src="/theme/amp.webp" class="w-full h-auto drop-shadow-[0_-5px_45px_rgba(0,0,0,0.9)]" alt="Amplifier">
-             
-             <!-- Primary Player Interface (Tablet Display Overlay, raised for better visibility) -->
-             <div class="absolute inset-0 flex items-center justify-center -translate-y-[29%]">
-                <websonic-player-display></websonic-player-display>
-             </div>
+            <img src="/theme/amp.webp" class="w-full h-auto drop-shadow-[0_-5px_45px_rgba(0,0,0,0.9)]" alt="Amplifier">
+            
+            <!-- Primary Player Screen (Hardware frame + Dashboard View) -->
+            <div class="absolute inset-0 flex items-center justify-center -translate-y-[29%]">
+              <websonic-player-display>
+                 <dashboard-view></dashboard-view>
+              </websonic-player-display>
+            </div>
           </div>
+
+          <!-- Top Layer: The Authorization Overlay (Triggered if not authenticated) -->
+          ${!this.isAuthenticated ? html`
+            <div class="absolute inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
+              <div class="scale-110 drop-shadow-[0_0_50px_rgba(212,175,55,0.2)]">
+                <websonic-player-display hideControls>
+                   <auth-view></auth-view>
+                </websonic-player-display>
+              </div>
+            </div>
+          ` : ''}
         </div>
 
         <div slot="player" class="flex items-center justify-center w-full px-12">
-           <!-- Playback controls will be integrated into the desk surface -->
            <p class="text-stone-400 font-mono text-sm tracking-widest uppercase opacity-50">
              System Ready / WebSonic Audio Engine
            </p>
