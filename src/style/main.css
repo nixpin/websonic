@@ -1,0 +1,36 @@
+@import "./theme.css";
+
+:root {
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: var(--color-text-base);
+  background-color: var(--color-bg-base);
+  
+  /* Smooth transitions for navigation */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+  background: var(--color-scrollbar-thumb); 
+  border-radius: 20px; 
+}
+::-webkit-scrollbar-thumb:hover { 
+  background: var(--color-scrollbar-hover); 
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
