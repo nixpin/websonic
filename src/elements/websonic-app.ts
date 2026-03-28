@@ -1,6 +1,6 @@
 import { html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { provide } from '@lit-labs/context';
+import { provide } from '@lit/context';
 import { createRouter } from '../router';
 import { BaseElement } from './base-element';
 import { subsonicContext } from '../context/subsonic-context';
@@ -8,12 +8,13 @@ import type { SubsonicClient } from '../sdk/subsonic';
 
 // Registration of layout components
 import '../components/websonic-shell';
+import '../components/websonic-player-display';
 
 @customElement('websonic-app')
 export class WebSonicApp extends BaseElement {
   // Global Subsonic Client Context
   @provide({ context: subsonicContext })
-  @state() 
+  @state()
   subsonicClient: SubsonicClient | null = null;
 
   // Externalized router configuration
@@ -24,15 +25,12 @@ export class WebSonicApp extends BaseElement {
       <websonic-shell>
         <div slot="main" class="flex flex-col items-center justify-end w-full h-full">
           <!-- Central Audio Equipment Interface -->
-          <div class="relative w-full max-w-5xl flex justify-center items-end">
-             <img src="/theme/amp.webp" class="w-full h-auto drop-shadow-[0_-5px_35px_rgba(0,0,0,0.8)]" alt="Amplifier">
+          <div class="relative w-full max-w-6xl flex justify-center items-end">
+             <img src="/theme/amp.webp" class="w-full h-auto drop-shadow-[0_-5px_45px_rgba(0,0,0,0.9)]" alt="Amplifier">
              
-             <!-- Dynamic Screen / Library Area (tablet style) -->
-             <div class="absolute inset-0 flex items-center justify-center -translate-y-[15%]">
-                <!-- Overlay content (Routes/Library) -->
-                <div class="w-[45%] h-[40%] bg-stone-900/10 rounded-sm">
-                   ${this.routes.outlet()}
-                </div>
+             <!-- Primary Player Interface (Tablet Display Overlay, raised for better visibility) -->
+             <div class="absolute inset-0 flex items-center justify-center -translate-y-[29%]">
+                <websonic-player-display></websonic-player-display>
              </div>
           </div>
         </div>
