@@ -27,19 +27,19 @@ export class WebSonicApp extends BaseElement {
 
   async connectedCallback() {
     super.connectedCallback();
-    
+
     // Initial check
     this.isAuthenticated = AuthService.isAuthenticated();
 
     // Listen for auth changes from anywhere in the app
     window.addEventListener('websonic-auth-changed', () => {
-       this.isAuthenticated = AuthService.isAuthenticated();
-       if (this.isAuthenticated) {
-         const config = AuthService.getActiveConfig();
-         if (config) this.subsonicClient = new SubsonicClient(config);
-       }
+      this.isAuthenticated = AuthService.isAuthenticated();
+      if (this.isAuthenticated) {
+        const config = AuthService.getActiveConfig();
+        if (config) this.subsonicClient = new SubsonicClient(config);
+      }
     });
-    
+
     // Always initialize the client if we have a config
     const config = AuthService.getActiveConfig();
     if (config) {
@@ -52,6 +52,15 @@ export class WebSonicApp extends BaseElement {
     // so no programmatic redirection is needed here.
   }
 
+  private handleLogout() {
+    const config = AuthService.getActiveConfig();
+    const serverName = config?.baseUrl || 'the server';
+
+    if (confirm(`Are you sure you want to disconnect from ${serverName}?`)) {
+      AuthService.logout();
+    }
+  }
+
   render() {
     return html`
       <websonic-shell>
@@ -61,6 +70,19 @@ export class WebSonicApp extends BaseElement {
           <div class="relative w-full max-w-6xl flex justify-center items-end">
             <img src="/theme/amp.webp" class="w-full h-auto drop-shadow-[0_-5px_45px_rgba(0,0,0,0.9)]" alt="Amplifier">
             
+            <!-- Physical Logout Switch Hotspot (Over the 'POWER' toggle) -->
+            ${this.isAuthenticated ? html`
+              <div 
+                class="absolute left-[37.5%] bottom-[19%] w-[32px] h-[55px] cursor-pointer group z-[60]"
+                @click=${this.handleLogout}
+                title="Connected to: ${AuthService.getActiveConfig()?.baseUrl} (@${AuthService.getActiveConfig()?.userName})"
+              >
+                <!-- Subtle electromagnetic glow on hover -->
+                <div class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-amber-500/10 blur-md rounded-full transition-all duration-300"></div>
+                <div class="absolute inset-0 border border-amber-500/0 group-hover:border-amber-500/30 rounded transition-all"></div>
+              </div>
+            ` : ''}
+
             <!-- Primary Player Screen (Hardware frame + Dashboard View) -->
             <div class="absolute inset-0 flex items-center justify-center -translate-y-[29%]">
               <websonic-player-display>

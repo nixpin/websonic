@@ -119,4 +119,14 @@ export class AuthService {
   static isAuthenticated(): boolean {
     return this.getActiveConfig() !== null;
   }
+
+  /**
+   * Clears the current session (Logout)
+   */
+  static logout(): void {
+    const store = this.getStore();
+    store.activeServerUrl = undefined;
+    this.saveStore(store);
+    this.notifyChange();
+  }
 }
