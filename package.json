@@ -1,0 +1,27 @@
+{
+  "name": "websonic",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@lit-labs/context": "^0.5.1",
+    "@lit-labs/router": "^0.1.4",
+    "crypto-js": "^4.2.0",
+    "lit": "^3.3.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/crypto-js": "^4.2.2",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
+    "typescript": "~5.9.3",
+    "vite": "^8.0.1"
+  }
+}
