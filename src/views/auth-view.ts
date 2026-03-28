@@ -75,15 +75,28 @@ export class AuthView extends BaseElement {
 
     return html`
       <style>
-        .auth-container {
+        .auth-view-wrapper {
           display: flex;
           flex-direction: column;
-          height: 100%;
+          height: 370px; /* Exact height for the screen area of current player-display */
           width: 100%;
-          padding: 20px;
+          padding: 24px;
           color: #ede0c4;
           font-family: var(--font-sans);
           overflow-y: auto;
+          scrollbar-width: thin;
+          scrollbar-color: #d4af37 transparent;
+        }
+        /* Custom scrollbar for blink browsers */
+        .auth-view-wrapper::-webkit-scrollbar {
+          width: 6px;
+        }
+        .auth-view-wrapper::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .auth-view-wrapper::-webkit-scrollbar-thumb {
+          background: #d4af37;
+          border-radius: 3px;
         }
         .auth-field {
           display: flex;
@@ -106,10 +119,10 @@ export class AuthView extends BaseElement {
         }
       </style>
 
-      <div class="auth-container">
-        <h2 class="text-xl font-bold mb-5 uppercase tracking-widest text-[#d4af37]">Server Connections</h2>
+      <div class="auth-view-wrapper">
+        <h2 class="text-xs font-black mb-5 uppercase tracking-[0.2em] text-[#d4af37] opacity-80 border-b border-[#d4af37]/10 pb-4">Digital Terminal / Auth</h2>
         
-        <div class="flex flex-col gap-8 h-full overflow-hidden">
+        <div class="flex flex-col gap-8">
           <!-- New Connection Form -->
           <section>
             <h3 class="text-xs font-bold uppercase text-[#9f9172] mb-4">Add New Server</h3>
@@ -162,7 +175,7 @@ export class AuthView extends BaseElement {
 
           <!-- Saved Servers List -->
           ${servers.length > 0 ? html`
-            <section class="flex-1 overflow-y-auto mt-4">
+            <section class="mt-4">
               <h3 class="text-xs font-bold uppercase text-[#9f9172] mb-4">Switch Connection</h3>
               <div class="flex flex-col gap-2">
                 ${servers.map(server => html`
