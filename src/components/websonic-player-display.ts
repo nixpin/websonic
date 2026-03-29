@@ -88,7 +88,7 @@ export class WebSonicPlayerDisplay extends LitElement {
 
     /* Bottom Control Panel (Wooden texture) */
     .control-panel {
-      height: 120px; /* Fixed height for the hardware panel */
+      height: 80px; /* Fixed height for the hardware panel */
       background: #2b1d16; /* Fallback wood color */
       border-top: 1px solid rgba(0,0,0,0.5);
       position: relative;
