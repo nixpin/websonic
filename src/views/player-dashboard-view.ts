@@ -149,6 +149,44 @@ export class PlayerDashboardView extends BaseElement {
       pointer-events: none;
     }
 
+    /* Placeholder Vinyl Label - Show text when no art */
+    .art-placeholder {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #151517; /* Slate-like vinyl label color */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      text-align: center;
+      box-sizing: border-box;
+      border: 1px solid rgba(251, 191, 36, 0.2);
+    }
+
+    .art-placeholder .placeholder-artist {
+      font-family: var(--font-family-heading);
+      color: #fbbf24; /* Amber-gold theme */
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      margin-bottom: 6px;
+      opacity: 0.8;
+      line-clamp: 2;
+      overflow: hidden;
+    }
+
+    .art-placeholder .placeholder-album {
+      font-family: var(--font-family-body);
+      color: #ede0c4;
+      font-size: 10px;
+      opacity: 0.5;
+      font-style: italic;
+      line-clamp: 2;
+      overflow: hidden;
+    }
+
     /* Mechanical Progress Bar */
     .progress-section {
       margin-top: auto;
@@ -348,7 +386,14 @@ export class PlayerDashboardView extends BaseElement {
           <div class="dashboard-main py-4">
             <div class="art-well">
               <div class="record-assembly ${activeStatus?.isPlaying ? 'is-playing' : ''}">
-                <img src="${coverUrl}" alt="Album Art">
+                ${track.coverArt ? html`
+                  <img src="${coverUrl}" alt="Album Art">
+                ` : html`
+                  <div class="art-placeholder">
+                    <div class="placeholder-artist">${track.artist}</div>
+                    <div class="placeholder-album">${track.album}</div>
+                  </div>
+                `}
                 <div class="vinyl-grooves"></div>
                 <div class="vinyl-label-center"></div>
               </div>
