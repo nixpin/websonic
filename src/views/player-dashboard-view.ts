@@ -157,13 +157,13 @@ export class PlayerDashboardView extends BaseElement {
     }
 
     .progress-track {
-      height: 4px; /* Slightly thicker for the groove look */
+      height: 2px; /* Ultra-slim precision groove */
       background: #000;
-      border-radius: 2px;
+      border-radius: 1px;
       position: relative;
       width: 100%;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+      cursor: pointer; /* Interaction hint */
     }
 
     .progress-fill {
@@ -171,37 +171,36 @@ export class PlayerDashboardView extends BaseElement {
       left: 0;
       top: 0;
       height: 100%;
-      background: linear-gradient(to right, var(--color-accent-from), var(--color-accent-primary));
-      border-radius: 2px;
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+      background: var(--color-accent-from);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+      border-radius: 1px;
     }
 
-    /* The Handle/Knob - Mechanical Brass look */
+    /* The Needle - High-precision laser-cut indicator */
     .progress-handle {
       position: absolute;
       top: 50%;
-      width: 16px;
-      height: 16px;
-      background: linear-gradient(135deg, #fde68a 0%, #b45309 100%);
+      width: 2px;
+      height: 18px; /* Taller needle like a scale marker */
+      background: #fbbf24;
       transform: translate(-50%, -50%);
-      border-radius: 50%;
       box-shadow: 
-        0 2px 5px rgba(0,0,0,0.5),
-        inset 0 1px 1px rgba(255,255,255,0.4);
-      border: 1px solid #78350f;
+        0 0 8px rgba(251, 191, 36, 0.8),
+        0 0 2px rgba(251, 191, 36, 1);
+      z-index: 10;
     }
 
-    /* Small center dot for the knob */
+    /* Small dot at the base of the needle for extra mechanical detail */
     .progress-handle::after {
       content: '';
       position: absolute;
-      top: 50%;
+      bottom: -4px;
       left: 50%;
       width: 4px;
       height: 4px;
-      background: rgba(0,0,0,0.3);
+      background: #fbbf24;
       border-radius: 50%;
-      transform: translate(-50%, -50%);
+      transform: translateX(-50%);
     }
 
     .time-labels {
@@ -257,20 +256,72 @@ export class PlayerDashboardView extends BaseElement {
     }
   `];
 
+  private _tickerInterval: any = null;
+
   private _onStateChanged = (e: Event) => {
     this.internalStatus = (e as CustomEvent).detail;
+    this._updateTicker();
   };
+
+  private _updateTicker() {
+    const status = this.status || this.internalStatus;
+    if (status?.isPlaying) {
+      this._startTicker();
+    } else {
+      this._stopTicker();
+    }
+  }
+
+  private _startTicker() {
+    if (this._tickerInterval) return;
+    this._tickerInterval = setInterval(() => {
+      const status = this.status || this.internalStatus;
+      if (status && status.isPlaying && status.currentTrack) {
+        if (status.position < status.currentTrack.duration) {
+          // Local increment for smooth UI movement
+          this.internalStatus = {
+            ...status,
+            position: status.position + 1
+          };
+        }
+      }
+    }, 1000);
+  }
+
+  private _stopTicker() {
+    if (this._tickerInterval) {
+      clearInterval(this._tickerInterval);
+      this._tickerInterval = null;
+    }
+  }
 
   connectedCallback() {
     super.connectedCallback();
     window.addEventListener('websonic-player-state-changed', this._onStateChanged);
     // Initial fetch
     this.internalStatus = PlayerService.getInstance().getState();
+    this._updateTicker();
   }
 
   disconnectedCallback() {
+    this._stopTicker();
     window.removeEventListener('websonic-player-state-changed', this._onStateChanged);
     super.disconnectedCallback();
+  }
+
+  private handleSeek(e: MouseEvent) {
+    const track = e.currentTarget as HTMLElement;
+    const rect = track.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = x / rect.width;
+    
+    const activeStatus = this.status || this.internalStatus;
+    const duration = activeStatus?.currentTrack?.duration || 0;
+    
+    if (duration > 0) {
+      const seekSeconds = Math.floor(percentage * duration);
+      PlayerService.getInstance().seek(seekSeconds);
+    }
   }
 
   private formatTime(seconds: number): string {
@@ -312,7 +363,7 @@ export class PlayerDashboardView extends BaseElement {
           </div>
 
           <div class="progress-section">
-            <div class="progress-track">
+            <div class="progress-track" @click=${this.handleSeek}>
               <div class="progress-fill" style="width: ${progress}%"></div>
               <div class="progress-handle" style="left: ${progress}%"></div>
             </div>

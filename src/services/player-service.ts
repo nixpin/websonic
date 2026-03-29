@@ -95,9 +95,30 @@ export class PlayerService {
     }
   }
 
+  async skipNext() {
+    await QueueService.skipNext();
+    this.refresh();
+  }
+
+  async skipPrevious() {
+    await QueueService.skipPrevious();
+    this.refresh();
+  }
+
+  async seek(seconds: number) {
+    if (this._state.currentIndex === -1) return;
+    
+    // Optimistic Update for UI smoothness
+    this._state.position = seconds;
+    this.notify();
+
+    await QueueService.seek(this._state.currentIndex, seconds);
+    // Let the standard polling handle the final confirmation
+  }
+
   private notify() {
     window.dispatchEvent(new CustomEvent('websonic-player-state-changed', {
-      detail: this._state
+      detail: this.getState()
     }));
   }
 
