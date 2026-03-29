@@ -54,7 +54,7 @@ export class QueueService {
           return {
             items,
             currentIndex: jukebox.currentIndex !== undefined ? Number(jukebox.currentIndex) : -1,
-            position: 0, // jukeboxControl?action=get doesn't always return position
+            position: jukebox.position !== undefined ? Number(jukebox.position) : 0,
             isPlaying: jukebox.playing === 'true' || jukebox.playing === true,
             gain: jukebox.gain || 100
           };
@@ -130,11 +130,25 @@ export class QueueService {
    */
   static async skipNext() {
     if (!this.client) return;
-    // We try jukeboxControl, but it might fail if module is disabled
-    try {
-      return await this.client.jukeboxControl('skip');
-    } catch (e) {
-      console.warn('QueueService: jukeboxControl not supported, skipping locally? (Not implemented)');
-    }
+    return this.client.jukeboxControl('skip');
+  }
+
+  /**
+   * Skip to previous
+   */
+  static async skipPrevious() {
+    if (!this.client) return;
+    return this.client.jukeboxControl('skip', { index: '0', offset: '0' }); // Subsonic hack for previous is tricky, but index 0 offset 0 is a start
+  }
+
+  /**
+   * Seek to specific position
+   */
+  static async seek(index: number, offset: number) {
+    if (!this.client) return;
+    return this.client.jukeboxControl('skip', { 
+      index: index.toString(), 
+      offset: Math.round(offset).toString() 
+    });
   }
 }
