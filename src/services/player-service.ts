@@ -10,6 +10,7 @@ export interface PlayerStatus {
   gain: number;
   bitRate?: number;
   format?: string;
+  queueLength: number;
 }
 
 /**
@@ -27,7 +28,8 @@ export class PlayerService {
     currentIndex: -1,
     position: 0,
     isPlaying: false,
-    gain: 100
+    gain: 100,
+    queueLength: 0
   };
 
   static getInstance(): PlayerService {
@@ -80,7 +82,8 @@ export class PlayerService {
         isPlaying: queueState.isPlaying,
         gain: queueState.gain,
         bitRate: currentTrack?.bitRate,
-        format: currentTrack?.suffix?.toUpperCase()
+        format: currentTrack?.suffix?.toUpperCase(),
+        queueLength: queueState.items.length
       };
 
       // Check if state changed
@@ -95,13 +98,38 @@ export class PlayerService {
     }
   }
 
-  async skipNext() {
-    await QueueService.skipNext();
+  async next() {
+    if (this._state.currentIndex === -1 || this._state.queueLength === 0) return;
+    await QueueService.next(this._state.currentIndex, this._state.queueLength);
     this.refresh();
   }
 
-  async skipPrevious() {
-    await QueueService.skipPrevious();
+  async prev() {
+    if (this._state.currentIndex === -1) return;
+    await QueueService.prev(this._state.currentIndex);
+    this.refresh();
+  }
+
+  async togglePlayback() {
+    if (!PlayerService.client) return;
+    const action = this._state.isPlaying ? 'stop' : 'start';
+    
+    // Optimistic Update
+    this._state.isPlaying = !this._state.isPlaying;
+    this.notify();
+
+    try {
+      await PlayerService.client.jukeboxControl(action);
+      this.refresh();
+    } catch (e) {
+      console.error('PlayerService: Playback toggle failed:', e);
+      // Revert if failed? (For now let polling fix it)
+    }
+  }
+
+  async stop() {
+    if (!PlayerService.client) return;
+    await PlayerService.client.jukeboxControl('stop');
     this.refresh();
   }
 
