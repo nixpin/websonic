@@ -11,6 +11,7 @@ export interface PlayerStatus {
   bitRate?: number;
   format?: string;
   queueLength: number;
+  items: QueueItem[];
 }
 
 /**
@@ -29,7 +30,8 @@ export class PlayerService {
     position: 0,
     isPlaying: false,
     gain: 100,
-    queueLength: 0
+    queueLength: 0,
+    items: []
   };
 
   static getInstance(): PlayerService {
@@ -83,7 +85,8 @@ export class PlayerService {
         gain: queueState.gain,
         bitRate: currentTrack?.bitRate,
         format: currentTrack?.suffix?.toUpperCase(),
-        queueLength: queueState.items.length
+        queueLength: queueState.items.length,
+        items: queueState.items
       };
 
       // Check if state changed
@@ -108,6 +111,23 @@ export class PlayerService {
     if (this._state.currentIndex === -1) return;
     await QueueService.prev(this._state.currentIndex);
     this.refresh();
+  }
+
+  async jumpTo(index: number) {
+    if (!PlayerService.client || index < 0 || index >= this._state.queueLength) return;
+    
+    // Optimistic Update
+    this._state.currentIndex = index;
+    this._state.currentTrack = this._state.items[index] || null;
+    this._state.position = 0;
+    this.notify();
+
+    try {
+      await PlayerService.client.jukeboxControl('skip', { index: index.toString(), offset: '0' });
+      this.refresh();
+    } catch (e) {
+      console.error('PlayerService: JumpTo failed:', e);
+    }
   }
 
   async togglePlayback() {
