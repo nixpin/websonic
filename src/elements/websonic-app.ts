@@ -128,15 +128,16 @@ export class WebSonicApp extends BaseElement {
 
           <!-- Side Panels: Library & Queue -->
           <div class="absolute inset-0 pointer-events-none flex z-[200]">
-             <library-panel style="width: 70%;" .isOpen=${this.isLibraryOpen} @close=${() => this.isLibraryOpen = false}></library-panel>
+             <library-panel style="width: 70%;" 
+                .isOpen=${this.isLibraryOpen} 
+                @close=${() => this.isLibraryOpen = false}
+             ></library-panel>
              <queue-panel style="width: 30%;" .isOpen=${this.isQueueOpen} @close=${() => this.isQueueOpen = false}></queue-panel>
           </div>
         </div>
 
         <div slot="player" class="flex items-center justify-center w-full px-12">
-           <p class="text-stone-400 font-mono text-sm tracking-widest uppercase opacity-50">
-             
-           </p>
+           <p class="text-stone-400 font-mono text-sm tracking-widest uppercase opacity-50"></p>
         </div>
       </websonic-shell>
     `;

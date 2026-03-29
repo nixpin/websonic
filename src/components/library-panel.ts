@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { BaseElement } from '../elements/base-element';
 import { MusicService } from '../services/music-service';
 import type { Artist, Genre, Playlist, Album, Song } from '../services/music-service';
+import { PlaybackService } from '../services/playback-service';
 import './websonic-pagination';
 
 type LibraryTab = 'artists' | 'genres' | 'playlists';
@@ -282,8 +283,19 @@ export class LibraryPanel extends BaseElement {
                                               <span class="text-[10px] text-[#4a3b2a]/70 italic">${album.songCount || 0} tracks</span>
                                           </div>
                                       </div>
-                                      <div class="pr-2 opacity-40 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-[#a17c2f]' : ''}">
-                                          <svg class="w-4 h-4 text-[#4a3b2a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                      <div class="flex items-center gap-4">
+                                          <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueueAlbum(album.id); }}
+                                                  class="p-1.5 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(album.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-30'} hover:opacity-100 transition-all group/add" title="Add all to queue">
+                                              ${this.pendingIds.has(album.id) ? html`
+                                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                              ` : html`
+                                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                              `}
+                                          </button>
+                                          <div @click=${() => this.toggleAlbum(album.id)}
+                                               class="cursor-pointer pr-2 opacity-20 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-[#a17c2f]' : ''}">
+                                              <svg class="w-4 h-4 text-[#4a3b2a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                          </div>
                                       </div>
                                   </div>
 
@@ -293,8 +305,8 @@ export class LibraryPanel extends BaseElement {
                                               <div class="w-4 h-4 border-2 border-[#4a3b2a]/20 border-t-transparent rounded-full animate-spin"></div>
                                           </div>
                                       ` : songs.map((song, index) => html`
-                                          <div @click=${() => this.handlePlaySong(song)}
-                                               class="flex items-center gap-3 py-2 px-4 hover:bg-[#4a3b2a]/10 transition-colors cursor-pointer group/song border-b border-[#4a3b2a]/10 last:border-0">
+                                          <div class="flex items-center gap-3 py-2 px-4 hover:bg-[#4a3b2a]/10 transition-colors cursor-pointer group/song border-b border-[#4a3b2a]/10 last:border-0"
+                                               @click=${() => this.handlePlaySong(song)}>
                                               <span class="text-[9px] font-black text-[#4a3b2a]/40 w-4 group-hover/song:text-[#4a3b2a]/80">${index + 1}</span>
                                               <div class="flex flex-col flex-1 min-w-0">
                                                   <span class="text-xs font-bold text-[#4a3b2a] truncate group-hover/song:text-black">${song.title}</span>
@@ -308,7 +320,17 @@ export class LibraryPanel extends BaseElement {
                                                       </span>
                                                   </div>
                                               </div>
-                                              <span class="text-[9px] font-bold text-[#4a3b2a]/60">${this.formatDuration(song.duration)}</span>
+                                              <div class="flex items-center gap-3">
+                                                  <span class="text-[9px] font-bold text-[#4a3b2a]/60">${this.formatDuration(song.duration)}</span>
+                                                  <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueueSong(song); }}
+                                                          class="p-1 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(song.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-0 group-hover/song:opacity-50 hover:!opacity-100'} transition-all" title="Add to queue">
+                                                      ${this.pendingIds.has(song.id) ? html`
+                                                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                                      ` : html`
+                                                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                                      `}
+                                                  </button>
+                                              </div>
                                           </div>
                                       `)}
                                   </div>
@@ -334,13 +356,32 @@ export class LibraryPanel extends BaseElement {
       return `${m}:${s.toString().padStart(2, '0')}`;
   }
 
+  @state() private pendingIds: Set<string> = new Set();
+
   private handlePlaySong(song: Song) {
-      this.dispatchEvent(new CustomEvent('play-song', { 
-          detail: { song },
-          bubbles: true, 
-          composed: true 
-      }));
+      this.triggerFeedback(song.id);
+      PlaybackService.playSong(song);
   }
+
+  private handleQueueSong(song: Song) {
+      this.triggerFeedback(song.id);
+      PlaybackService.addToQueue([song]);
+  }
+
+  private async handleQueueAlbum(albumId: string) {
+      this.triggerFeedback(albumId);
+      PlaybackService.addAlbumToQueue(albumId);
+  }
+
+  private triggerFeedback(id: string) {
+      this.pendingIds.add(id);
+      this.requestUpdate();
+      setTimeout(() => {
+          this.pendingIds.delete(id);
+          this.requestUpdate();
+      }, 1500);
+  }
+
   private renderList() {
       if (this.activeTab === 'artists') {
           return this.artists.map(a => html`
