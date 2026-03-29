@@ -147,6 +147,23 @@ export class PlayerService {
     }
   }
 
+  async start() {
+    if (!PlayerService.client || this._isAwaitingServer) return;
+    this._isAwaitingServer = true;
+    try {
+      await PlayerService.client.jukeboxControl('start');
+      await this.refresh();
+    } catch (e) {
+      console.error('PlayerService: Start failed:', e);
+    } finally {
+      this._isAwaitingServer = false;
+    }
+  }
+
+  async play() {
+    return this.start();
+  }
+
   async togglePlayback() {
     if (!PlayerService.client || this._isAwaitingServer) return;
     const action = this._state.isPlaying ? 'stop' : 'start';
