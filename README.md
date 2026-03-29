@@ -12,6 +12,7 @@ Project is on early development stage!!
 - [ ] Now Playing (Album Art, Song Info, Progress Bar)
 - [ ] Real-time Playback Controls (Play, Pause, Next, Previous)
 - [ ] Playlist Management (Create, Edit, Delete, Play)
+- [ ] High quality theme redesign
 - [ ] Multi-server Support (Add, Remove, Switch)
 
 ## 📦 Getting Started

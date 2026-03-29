@@ -1,5 +1,6 @@
-import { LitElement, html, css } from 'lit';
+import { html, css } from 'lit';
 import { customElement } from 'lit/decorators.js';
+import { BaseElement } from '../elements/base-element';
 
 /**
  * WebSonic Shell
@@ -8,8 +9,10 @@ import { customElement } from 'lit/decorators.js';
  * - player: Slot for controls, integrated into the desk surface
  */
 @customElement('websonic-shell')
-export class WebSonicShell extends LitElement {
-  static styles = css`
+export class WebSonicShell extends BaseElement {
+  static styles = [
+    ...BaseElement.styles,
+    css`
     :host {
       display: block;
       position: relative;
@@ -20,7 +23,7 @@ export class WebSonicShell extends LitElement {
       background: #000 url('/theme/bg.webp') no-repeat center center fixed;
       background-size: cover;
       color: var(--color-stone-100);
-      font-family: var(--font-sans);
+      font-family: var(--font-family-body);
     }
 
     /* Primary content area (Holds the Amp, stuck to the bottom) */
@@ -99,7 +102,7 @@ export class WebSonicShell extends LitElement {
         width: 30%; /* Responsive scaling for smaller screens */
       }
     }
-  `;
+  `];
 
   render() {
     return html`

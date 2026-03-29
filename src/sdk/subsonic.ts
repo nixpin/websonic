@@ -20,7 +20,7 @@ export class SubsonicClient {
     return md5(password + salt).toString();
   }
 
-  private buildUrl(method: string, params: Record<string, string> = {}) {
+  private getAuthorizedUrl(method: string, params: Record<string, string> = {}): URL {
     const url = new URL(`${this.config.baseUrl}/rest/${method}.view`);
     url.searchParams.set('u', this.config.userName);
     url.searchParams.set('t', this.config.token);
@@ -33,7 +33,11 @@ export class SubsonicClient {
       url.searchParams.set(key, value);
     });
 
-    return url.toString();
+    return url;
+  }
+
+  private buildUrl(method: string, params: Record<string, string> = {}) {
+    return this.getAuthorizedUrl(method, params).toString();
   }
 
   async fetch(method: string, params: Record<string, string> = {}) {
@@ -68,15 +72,18 @@ export class SubsonicClient {
   }
 
   // Jukebox support
-  async jukeboxControl(action: string, index?: number, id?: string) {
-    const params: Record<string, string> = { action };
-    if (index !== undefined) params.index = index.toString();
-    if (id !== undefined) params.id = id;
-    return this.fetch('jukeboxControl', params);
+  async jukeboxControl(action: string, params: Record<string, string> = {}) {
+    return this.fetch('jukeboxControl', { action, ...params });
   }
 
-  async getJukeboxPlaylist() {
-    return this.fetch('jukeboxPlaylist');
+  async getPlayQueue() {
+    return this.fetch('getPlayQueue');
+  }
+
+  getCoverArtUrl(id: string, size: number = 200) {
+    const params: Record<string, string> = { id };
+    if (size) params.size = size.toString();
+    return this.getAuthorizedUrl('getCoverArt', params).toString();
   }
 
   // Songs searching/filtering
