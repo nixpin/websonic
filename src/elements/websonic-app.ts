@@ -29,6 +29,7 @@ export class WebSonicApp extends BaseElement {
   @state() private isAuthenticated = false;
   @state() private isQueueOpen = false;
   @state() private isLibraryOpen = false;
+  @state() private isPlaying = false;
 
   // Externalized router configuration
   routes = createRouter(this as any);
@@ -52,12 +53,19 @@ export class WebSonicApp extends BaseElement {
       }
     });
 
+    // Listen for player state changes
+    window.addEventListener('websonic-player-state-changed', (e: any) => {
+      this.isPlaying = e.detail.isPlaying;
+    });
+
     // Always initialize the client if we have a config
     const config = AuthService.getActiveConfig();
     if (config) {
       this.subsonicClient = new SubsonicClient(config);
       QueueService.setClient(this.subsonicClient);
       PlayerService.setClient(this.subsonicClient);
+      // Initialize isPlaying state
+      this.isPlaying = PlayerService.getInstance().getState().isPlaying;
     }
   }
 
@@ -99,6 +107,7 @@ export class WebSonicApp extends BaseElement {
               .isAuthenticated=${this.isAuthenticated}
               .isQueueOpen=${this.isQueueOpen}
               .isLibraryOpen=${this.isLibraryOpen}
+              .isPlaying=${this.isPlaying}
               @logout=${this.handleLogout}
               @toggle-queue=${this.toggleQueue}
               @toggle-library=${this.toggleLibrary}

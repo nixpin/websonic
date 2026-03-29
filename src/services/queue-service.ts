@@ -126,19 +126,21 @@ export class QueueService {
   }
 
   /**
-   * Skip to next
+   * Move to next
    */
-  static async skipNext() {
-    if (!this.client) return;
-    return this.client.jukeboxControl('skip');
+  static async next(currentIndex: number, totalItems: number) {
+    if (!this.client || currentIndex < 0) return;
+    const targetIndex = (currentIndex + 1) % totalItems;
+    return this.client.jukeboxControl('skip', { index: targetIndex.toString() });
   }
 
   /**
-   * Skip to previous
+   * Move to previous
    */
-  static async skipPrevious() {
-    if (!this.client) return;
-    return this.client.jukeboxControl('skip', { index: '0', offset: '0' }); // Subsonic hack for previous is tricky, but index 0 offset 0 is a start
+  static async prev(currentIndex: number) {
+    if (!this.client || currentIndex < 0) return;
+    const targetIndex = Math.max(0, currentIndex - 1);
+    return this.client.jukeboxControl('skip', { index: targetIndex.toString(), offset: '0' });
   }
 
   /**

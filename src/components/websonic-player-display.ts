@@ -10,6 +10,37 @@ import { BaseElement } from '../elements/base-element';
 @customElement('websonic-player-display')
 export class WebSonicPlayerDisplay extends BaseElement {
   @property({ type: Boolean }) hideControls = false;
+  @property({ type: Boolean }) isPlaying = false;
+
+  private _onStateChanged = (e: Event) => {
+    this.isPlaying = (e as CustomEvent).detail.isPlaying;
+  };
+
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener('websonic-player-state-changed', this._onStateChanged);
+    
+    import('../services/player-service').then(m => {
+       this.isPlaying = m.PlayerService.getInstance().getState().isPlaying;
+    });
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener('websonic-player-state-changed', this._onStateChanged);
+    super.disconnectedCallback();
+  }
+
+  private _togglePlay() {
+    import('../services/player-service').then(m => m.PlayerService.getInstance().togglePlayback());
+  }
+
+  private _next() {
+    import('../services/player-service').then(m => m.PlayerService.getInstance().next());
+  }
+
+  private _prev() {
+    import('../services/player-service').then(m => m.PlayerService.getInstance().prev());
+  }
 
   static styles = [
     ...BaseElement.styles,
@@ -135,7 +166,7 @@ export class WebSonicPlayerDisplay extends BaseElement {
       transform: scale(1.1);
     }
     
-    .btn-play {
+    .btn-play, .btn-prev, .btn-next {
       background: rgba(0,0,0,0.2);
       border-radius: 50%;
       border: 1px solid rgba(255,157,0,0.2);
@@ -155,13 +186,17 @@ export class WebSonicPlayerDisplay extends BaseElement {
 
         ${!this.hideControls ? html`
           <div class="control-panel">
-            <div class="btn btn-skip">
+            <div class="btn btn-prev" @click=${this._prev}>
               <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
             </div>
-            <div class="btn btn-play">
-              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <div class="btn btn-play" @click=${this._togglePlay}>
+              ${this.isPlaying ? html`
+                <svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              ` : html`
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              `}
             </div>
-            <div class="btn btn-skip">
+            <div class="btn btn-next" @click=${this._next}>
               <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
             </div>
           </div>
