@@ -10,6 +10,10 @@ import { AuthService } from '../services/auth-service';
 // Registration of layout and view components
 import '../components/websonic-shell';
 import '../components/websonic-player-display';
+import '../components/websonic-amp-hardware';
+import '../components/websonic-auth-overlay';
+import '../components/library-panel';
+import '../components/queue-panel';
 import '../views/auth-view.ts';
 import '../views/dashboard-view.ts';
 
@@ -21,6 +25,8 @@ export class WebSonicApp extends BaseElement {
   subsonicClient: SubsonicClient | null = null;
 
   @state() private isAuthenticated = false;
+  @state() private isQueueOpen = false;
+  @state() private isLibraryOpen = false;
 
   // Externalized router configuration
   routes = createRouter(this as any);
@@ -61,6 +67,18 @@ export class WebSonicApp extends BaseElement {
     }
   }
 
+  private toggleQueue() {
+    this.isQueueOpen = !this.isQueueOpen;
+  }
+
+  private toggleLibrary() {
+    this.isLibraryOpen = !this.isLibraryOpen;
+    // As per user request: when library opens, queue should also be open
+    if (this.isLibraryOpen) {
+      this.isQueueOpen = true;
+    }
+  }
+
   render() {
     return html`
       <websonic-shell>
@@ -68,44 +86,39 @@ export class WebSonicApp extends BaseElement {
           
           <!-- Bottom Layer: The Physical Jukebox Interface -->
           <div class="relative w-full max-w-6xl flex justify-center items-end">
-            <img src="/theme/amp.webp" class="w-full h-auto drop-shadow-[0_-5px_45px_rgba(0,0,0,0.9)]" alt="Amplifier">
-            
-            <!-- Physical Logout Switch Hotspot (Over the 'POWER' toggle) -->
-            ${this.isAuthenticated ? html`
-              <div 
-                class="absolute left-[37.5%] bottom-[19%] w-[32px] h-[55px] cursor-pointer group z-[60]"
-                @click=${this.handleLogout}
-                title="Connected to: ${AuthService.getActiveConfig()?.baseUrl} (@${AuthService.getActiveConfig()?.userName})"
-              >
-                <!-- Subtle electromagnetic glow on hover -->
-                <div class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-amber-500/10 blur-md rounded-full transition-all duration-300"></div>
-                <div class="absolute inset-0 border border-amber-500/0 group-hover:border-amber-500/30 rounded transition-all"></div>
-              </div>
-            ` : ''}
+            <websonic-amp-hardware 
+              class="relative w-full"
+              .isAuthenticated=${this.isAuthenticated}
+              .isQueueOpen=${this.isQueueOpen}
+              .isLibraryOpen=${this.isLibraryOpen}
+              @logout=${this.handleLogout}
+              @toggle-queue=${this.toggleQueue}
+              @toggle-library=${this.toggleLibrary}
+            ></websonic-amp-hardware>
 
             <!-- Primary Player Screen (Hardware frame + Dashboard View) -->
-            <div class="absolute inset-0 flex items-center justify-center -translate-y-[29%]">
-              <websonic-player-display>
-                 <dashboard-view></dashboard-view>
-              </websonic-player-display>
+            <div class="absolute inset-0 flex items-center justify-center -translate-y-[29%] pointer-events-none">
+              <div class="pointer-events-auto">
+                <websonic-player-display>
+                   <dashboard-view></dashboard-view>
+                </websonic-player-display>
+              </div>
             </div>
           </div>
 
           <!-- Top Layer: The Authorization Overlay (Triggered if not authenticated) -->
-          ${!this.isAuthenticated ? html`
-            <div class="absolute inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md animate-in fade-in duration-500">
-              <div class="scale-110 drop-shadow-[0_0_50px_rgba(212,175,55,0.2)]">
-                <websonic-player-display hideControls>
-                   <auth-view></auth-view>
-                </websonic-player-display>
-              </div>
-            </div>
-          ` : ''}
+          <websonic-auth-overlay ?show=${!this.isAuthenticated}></websonic-auth-overlay>
+
+          <!-- Side Panels: Library & Queue -->
+          <div class="absolute inset-0 pointer-events-none flex z-[200]">
+             <library-panel style="width: 70%;" .isOpen=${this.isLibraryOpen} @close=${() => this.isLibraryOpen = false}></library-panel>
+             <queue-panel style="width: 30%;" .isOpen=${this.isQueueOpen} @close=${() => this.isQueueOpen = false}></queue-panel>
+          </div>
         </div>
 
         <div slot="player" class="flex items-center justify-center w-full px-12">
            <p class="text-stone-400 font-mono text-sm tracking-widest uppercase opacity-50">
-             System Ready / WebSonic Audio Engine
+             
            </p>
         </div>
       </websonic-shell>
