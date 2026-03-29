@@ -201,7 +201,18 @@ export class PlayerDashboardView extends BaseElement {
       position: relative;
       width: 100%;
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
-      cursor: pointer; /* Interaction hint */
+      cursor: pointer;
+    }
+
+    /* Invisible expanded hit area for easier clicking/seeking */
+    .progress-track::before {
+      content: '';
+      position: absolute;
+      top: -12px;
+      bottom: -12px;
+      left: 0;
+      right: 0;
+      z-index: 5;
     }
 
     .progress-fill {
