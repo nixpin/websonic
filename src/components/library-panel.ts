@@ -367,11 +367,6 @@ export class LibraryPanel extends BaseElement {
 
   @state() private pendingIds: Set<string> = new Set();
 
-  private handlePlaySong(song: Song) {
-      this.triggerFeedback(song.id);
-      PlaybackService.playSong(song);
-  }
-
   private handleQueueSong(song: Song) {
       this.triggerFeedback(song.id);
       PlaybackService.addToQueue([song]);
