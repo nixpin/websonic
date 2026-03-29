@@ -4,6 +4,18 @@ export interface Artist {
   id: string;
   name: string;
   albumCount?: number;
+  artistImageUrl?: string;
+}
+
+export interface Album {
+  id: string;
+  name: string;
+  artist: string;
+  artistId: string;
+  year?: number;
+  genre?: string;
+  coverArt?: string;
+  songCount?: number;
 }
 
 export interface Song {
@@ -15,6 +27,8 @@ export interface Song {
   albumId?: string;
   duration?: number;
   coverArt?: string;
+  bitRate?: number;
+  suffix?: string;
 }
 
 export interface Genre {
@@ -134,9 +148,52 @@ export class MusicService {
     return playlists.length > size ? playlists.slice(offset, offset + size) : playlists;
   }
 
+  async getArtist(id: string): Promise<{ artist: Artist; albums: Album[] }> {
+    const data = await this.fetchSubsonic('getArtist', { id });
+    const artist = data.artist;
+    const albums = artist?.album || [];
+    
+    return {
+      artist: {
+        id: artist.id,
+        name: artist.name,
+        albumCount: artist.albumCount,
+        artistImageUrl: artist.artistImageUrl
+      },
+      albums: albums.map((a: any) => ({
+        id: a.id,
+        name: a.title || a.name, // Subsonic sometimes uses title for albums in getArtist
+        artist: a.artist,
+        artistId: a.artistId,
+        year: a.year,
+        genre: a.genre,
+        coverArt: a.coverArt,
+        songCount: a.songCount
+      }))
+    };
+  }
+
+  async getAlbumSongs(id: string): Promise<Song[]> {
+    const data = await this.fetchSubsonic('getAlbum', { id });
+    const songs = data.album?.song || [];
+    
+    return songs.map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      artist: s.artist,
+      artistId: s.artistId,
+      album: s.album,
+      albumId: s.albumId,
+      duration: s.duration,
+      coverArt: s.coverArt,
+      bitRate: s.bitRate,
+      suffix: s.suffix
+    }));
+  }
+
   getCoverArtUrl(id: string, size: number = 300): string {
     const config = AuthService.getActiveConfig();
     if (!config) return '';
-    return `${config.baseUrl}/rest/getCoverArt.view?u=${config.userName}&t=${config.token}&s=${config.salt}&v=1.16.1&c=websonic&f=json&id=${id}&size=${size}`;
+    return `${config.baseUrl}/rest/getCoverArt.view?u=${config.userName}&t=${config.token}&s=${config.salt}&v=1.16.1&c=websonic&id=${id}&size=${size}`;
   }
 }
