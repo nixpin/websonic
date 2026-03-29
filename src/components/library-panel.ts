@@ -305,9 +305,8 @@ export class LibraryPanel extends BaseElement {
                                                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                               `}
                                           </button>
-                                          <div @click=${() => this.toggleAlbum(album.id)}
-                                               class="cursor-pointer pr-2 opacity-20 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-[#a17c2f]' : ''}">
-                                              <svg class="w-4 h-4 text-[#4a3b2a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                          <div class="pr-2 opacity-20 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-[#a17c2f]' : ''}">
+                                              <svg class="w-4 h-4 text-[#4a3b2a] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
                                           </div>
                                       </div>
                                   </div>
@@ -318,8 +317,7 @@ export class LibraryPanel extends BaseElement {
                                               <div class="w-4 h-4 border-2 border-[#4a3b2a]/20 border-t-transparent rounded-full animate-spin"></div>
                                           </div>
                                       ` : songs.map((song, index) => html`
-                                          <div class="flex items-center gap-3 py-2 px-4 hover:bg-[#4a3b2a]/10 transition-colors cursor-pointer group/song border-b border-[#4a3b2a]/10 last:border-0"
-                                               @click=${() => this.handlePlaySong(song)}>
+                                          <div class="flex items-center gap-3 py-2 px-4 hover:bg-[#4a3b2a]/10 transition-colors group/song border-b border-[#4a3b2a]/10 last:border-0 overflow-hidden">
                                               <span class="text-[9px] font-black text-[#4a3b2a]/40 w-4 group-hover/song:text-[#4a3b2a]/80">${index + 1}</span>
                                               <div class="flex flex-col flex-1 min-w-0">
                                                   <span class="text-xs font-bold text-[#4a3b2a] truncate group-hover/song:text-black">${song.title}</span>
