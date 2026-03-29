@@ -191,6 +191,26 @@ export class MusicService {
     }));
   }
 
+  async getAlbums(type: string = 'newest', size: number = 50, offset: number = 0): Promise<Album[]> {
+    const data = await this.fetchSubsonic('getAlbumList2', {
+      type,
+      size: size.toString(),
+      offset: offset.toString()
+    });
+    
+    const albums = data.albumList2?.album || [];
+    return albums.map((a: any) => ({
+      id: a.id,
+      name: a.title || a.name,
+      artist: a.artist,
+      artistId: a.artistId,
+      year: a.year,
+      genre: a.genre,
+      coverArt: a.coverArt,
+      songCount: a.songCount
+    }));
+  }
+
   getCoverArtUrl(id: string, size: number = 300): string {
     const config = AuthService.getActiveConfig();
     if (!config) return '';

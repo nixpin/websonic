@@ -172,7 +172,16 @@ export class LibraryPanel extends BaseElement {
         <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
 
         <div class="relative p-6 h-full flex flex-col items-center">
-            <h2 class="text-xl font-black text-[#4a3b2a] opacity-70 uppercase tracking-[0.3em] mb-4">Music Library</h2>
+            <!-- Header aligned with requirements: Title on Left, Close on Right, Same size as Queue -->
+            <div class="w-full flex items-center justify-between mb-2">
+                <h2 class="text-xl font-black text-[#4a3b2a] opacity-70 uppercase tracking-[0.3em] truncate">Music Library</h2>
+                <button @click=${this.handleClose} 
+                        class="text-[#4a3b2a] opacity-40 hover:opacity-100 transition-opacity p-2 -mr-3 cursor-pointer z-50" 
+                        title="Close Library">
+                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
             <div class="w-full h-px bg-[#4a3b2a] opacity-10 mb-4"></div>
 
             <div class="flex gap-4 w-full border-b border-[#4a3b2a]/10 pb-1 mb-4 overflow-x-auto custom-scrollbar">
@@ -207,9 +216,7 @@ export class LibraryPanel extends BaseElement {
             </div>
         </div>
 
-        <button @click=${this.handleClose} class="absolute top-3 right-4 text-[#4a3b2a] opacity-40 hover:opacity-100 transition-opacity p-2 cursor-pointer z-50">
-           <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        </div>
       </div>
     `;
   }
@@ -227,6 +234,12 @@ export class LibraryPanel extends BaseElement {
                   <button @click=${this.goBackToList} class="flex items-center gap-2 text-[#4a3b2a] opacity-70 hover:opacity-100 transition-opacity">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                       <span class="text-[10px] uppercase font-black tracking-widest">Back</span>
+                  </button>
+
+                  <button @click=${this.handleClose} 
+                          class="text-[#4a3b2a] opacity-40 hover:opacity-100 transition-opacity p-2 -mr-3 cursor-pointer z-50" 
+                          title="Close Library">
+                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                   </button>
               </div>
 
@@ -342,10 +355,8 @@ export class LibraryPanel extends BaseElement {
               `}
           </div>
 
-          <button @click=${this.handleClose} class="absolute top-3 right-4 text-[#4a3b2a] opacity-40 hover:opacity-100 transition-opacity p-2 cursor-pointer z-50">
-             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
         </div>
+      </div>
       `;
   }
 
