@@ -84,7 +84,7 @@ export class PlayerService {
         currentIndex: queueState.currentIndex,
         position: queueState.position,
         isPlaying: queueState.isPlaying,
-        gain: Math.round((queueState.gain || 0) * 100),
+        gain: Math.round((queueState.gain || 0) * 100), // Scale 0.0-1.0 to 0-100 for UI
         bitRate: currentTrack?.bitRate,
         format: currentTrack?.suffix?.toUpperCase(),
         queueLength: queueState.items.length,
@@ -227,8 +227,8 @@ export class PlayerService {
       // Don't send if value is the same or already waiting
       if (this._isAwaitingServer || value === this._lastSentGain) return;
       
-      this._isAwaitingServer = true;
       try {
+        // Scale 0-100 back to 0.0-1.0 for Subsonic/Gonic
         await PlayerService.client?.jukeboxControl('setGain', { gain: (value / 100).toString() });
         this._lastSentGain = value;
         await this.refresh();

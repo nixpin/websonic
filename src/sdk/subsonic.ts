@@ -30,7 +30,11 @@ export class SubsonicClient {
     url.searchParams.set('f', 'json');
 
     Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.set(key, value);
+      if (Array.isArray(value)) {
+        value.forEach(v => url.searchParams.append(key, String(v)));
+      } else {
+        url.searchParams.set(key, String(value));
+      }
     });
 
     return url;
@@ -72,8 +76,8 @@ export class SubsonicClient {
   }
 
   // Jukebox support
-  async jukeboxControl(action: string, params: Record<string, string> = {}) {
-    return this.fetch('jukeboxControl', { action, ...params });
+  async jukeboxControl(action: string, params: Record<string, string | string[]> = {}) {
+    return this.fetch('jukeboxControl', { action, ...params } as Record<string, string>);
   }
 
   async getPlayQueue() {

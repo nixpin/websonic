@@ -15,15 +15,14 @@ export interface QueueItem {
 export interface QueueState {
   items: QueueItem[];
   currentIndex: number;
-  position: number; // ms
+  position: number; // seconds (Subsonic jukebox standard)
   isPlaying: boolean;
-  gain: number; // For jukebox volume
+  gain: number; // 0.0 - 1.0 (Subsonic standard) or 0-100
 }
 
 /**
  * QueueService
  * Handles fetching and managing the playback queue.
- * Relying on getPlayQueue (Subsonic 1.12.0+) for broad compatibility.
  */
 export class QueueService {
   private static client: SubsonicClient | null = null;
@@ -46,7 +45,7 @@ export class QueueService {
   static async fetchQueue(): Promise<QueueState> {
     if (!this.client) {
       console.warn('QueueService: No Subsonic client initialized.');
-      return { items: [], currentIndex: -1, position: 0, isPlaying: false, gain: 100 };
+      return { items: [], currentIndex: -1, position: 0, isPlaying: false, gain: 1 };
     }
 
     try {
@@ -54,7 +53,7 @@ export class QueueService {
       let currentIndex = -1;
       let position = 0;
       let isPlaying = false;
-      let gain = 100;
+      let gain = 1;
 
       // 1. Try Jukebox Control first (Server-side hardware playback)
       try {
@@ -62,10 +61,11 @@ export class QueueService {
         const jukebox = response.jukeboxPlaylist || response.jukeboxStatus;
         if (jukebox) {
           serverItems = jukebox.entry ? this.mapEntries(jukebox.entry) : [];
-          currentIndex = jukebox.currentIndex !== undefined ? Number(jukebox.currentIndex) : -1;
+          currentIndex = (jukebox.currentIndex !== undefined && jukebox.currentIndex !== null) ? Number(jukebox.currentIndex) : -1;
           position = jukebox.position !== undefined ? Number(jukebox.position) : 0;
           isPlaying = jukebox.playing === 'true' || jukebox.playing === true;
-          gain = jukebox.gain || 100;
+          // Gonic returns float 0.0 to 1.0. 
+          gain = (jukebox.gain !== undefined && jukebox.gain !== null) ? Number(jukebox.gain) : 1;
         }
       } catch (e: any) {
         if (!e.message?.includes('not found') && !e.message?.includes('70')) {
@@ -79,11 +79,11 @@ export class QueueService {
         if (playQueue && (playQueue.entry || playQueue.current)) {
           serverItems = playQueue.entry ? this.mapEntries(playQueue.entry) : [];
           if (playQueue.current !== undefined) {
-             const currentRef = String(playQueue.current);
-             currentIndex = serverItems.findIndex(i => i.id === currentRef);
-             if (currentIndex === -1 && !isNaN(Number(currentRef))) {
-               currentIndex = Number(currentRef);
-             }
+            const currentRef = String(playQueue.current);
+            currentIndex = serverItems.findIndex(i => i.id === currentRef);
+            if (currentIndex === -1 && !isNaN(Number(currentRef))) {
+              currentIndex = Number(currentRef);
+            }
           }
           position = playQueue.position || 0;
           isPlaying = currentIndex !== -1;
@@ -105,7 +105,7 @@ export class QueueService {
       };
     } catch (error) {
       console.error('QueueService: Queue retrieval failed:', error);
-      return { items: [], currentIndex: -1, position: 0, isPlaying: false, gain: 100 };
+      return { items: [], currentIndex: -1, position: 0, isPlaying: false, gain: 1 };
     }
   }
 
@@ -116,11 +116,11 @@ export class QueueService {
     const entries = Array.isArray(entry) ? entry : [entry];
 
     return entries.map((song: any) => ({
-      id: song.id,
-      title: song.title,
-      artist: song.artist,
-      album: song.album,
-      duration: song.duration,
+      id: song.id || '',
+      title: song.title || 'Unknown Title',
+      artist: song.artist || 'Unknown Artist',
+      album: song.album || '',
+      duration: song.duration ? Number(song.duration) : 0,
       coverArt: song.coverArt,
       bitRate: song.bitRate,
       contentType: song.contentType,
@@ -128,71 +128,51 @@ export class QueueService {
     }));
   }
 
-  /**
-   * Example: Clear the queue (Logic only, no UI yet)
-   */
   static async clearQueue() {
     if (!this.client) return;
-    this._pendingItems = []; // Also clear locals
+    this._pendingItems = []; 
     return this.client.jukeboxControl('clear');
   }
 
-  /**
-   * Remove a specific song from the queue by index
-   */
   static async removeSong(index: number) {
     if (!this.client || index < 0) return;
-    
-    // Dispatch event to refresh UI if needed
-    // (Actual optimistic removal from server-side list is hard to do here without knowing the full list, 
-    // so we'll let QueuePanel handle UI state)
-    
     return this.client.jukeboxControl('remove', { index: index.toString() });
   }
 
-  /**
-   * Move to next
-   */
   static async next(currentIndex: number, totalItems: number) {
-    if (!this.client || currentIndex < 0) return;
+    if (!this.client || currentIndex < 0 || totalItems === 0) return;
     const targetIndex = (currentIndex + 1) % totalItems;
     return this.client.jukeboxControl('skip', { index: targetIndex.toString() });
   }
 
-  /**
-   * Move to previous
-   */
   static async prev(currentIndex: number) {
     if (!this.client || currentIndex < 0) return;
     const targetIndex = Math.max(0, currentIndex - 1);
     return this.client.jukeboxControl('skip', { index: targetIndex.toString(), offset: '0' });
   }
 
-  /**
-   * Seek to specific position
-   */
+  static async reorderQueue(items: QueueItem[]) {
+    if (!this.client) return;
+    // Single atomic 'set' instead of clear + multiple additions
+    return this.client.jukeboxControl('set', { id: items.map(i => i.id) });
+  }
+
   static async seek(index: number, offset: number) {
     if (!this.client) return;
-    return this.client.jukeboxControl('skip', { 
-      index: index.toString(), 
-      offset: Math.round(offset).toString() 
+    return this.client.jukeboxControl('skip', {
+      index: index.toString(),
+      offset: Math.round(offset).toString()
     });
   }
 
-  /**
-   * Add songs to the queue
-   */
   static async addSongs(items: QueueItem[]) {
     if (!this.client || items.length === 0) return;
-    
+
     // Optimistically add to local list
     this._pendingItems = [...this._pendingItems, ...items];
-    
-    // Trigger UI update immediately so they appear in QueuePanel right now
     window.dispatchEvent(new CustomEvent('websonic-queue-changed'));
-    
-    for (const item of items) {
-        await this.client.jukeboxControl('add', { id: item.id });
-    }
+
+    // Single request with multiple IDs
+    return this.client.jukeboxControl('add', { id: items.map(i => i.id) });
   }
 }
