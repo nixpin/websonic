@@ -1,5 +1,6 @@
-import { LitElement, html, css } from 'lit';
+import { html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { BaseElement } from '../elements/base-element';
 
 /**
  * WebSonic Player Display
@@ -7,10 +8,12 @@ import { customElement, property } from 'lit/decorators.js';
  * Features an info screen and a tactile wooden control panel.
  */
 @customElement('websonic-player-display')
-export class WebSonicPlayerDisplay extends LitElement {
+export class WebSonicPlayerDisplay extends BaseElement {
   @property({ type: Boolean }) hideControls = false;
 
-  static styles = css`
+  static styles = [
+    ...BaseElement.styles,
+    css`
     :host {
       display: block;
       width: 600px;
@@ -40,7 +43,7 @@ export class WebSonicPlayerDisplay extends LitElement {
         linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
       mask-composite: exclude;
-
+      
       /* Distinct golden/bronze metallic rim highlight */
       border: 2px solid #8c734b;
       
@@ -138,7 +141,7 @@ export class WebSonicPlayerDisplay extends LitElement {
       border: 1px solid rgba(255,157,0,0.2);
       box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
     }
-  `;
+  `];
 
   render() {
     return html`

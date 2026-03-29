@@ -82,7 +82,7 @@ export class AuthView extends BaseElement {
           width: 100%;
           padding: 24px;
           color: #ede0c4;
-          font-family: var(--font-sans);
+          font-family: var(--font-family-body);
           overflow-y: auto;
           scrollbar-width: thin;
           scrollbar-color: #d4af37 transparent;

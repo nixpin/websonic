@@ -1,25 +1,16 @@
-import { LitElement, css } from 'lit';
+import { LitElement } from 'lit';
+import { sharedStyles } from './shared-styles';
 
 /**
  * WebSonicBaseElement
- * Global base class for all custom elements in the project.
- * Provides a clean foundation for shared behavior and styles.
+ * Architectural Base for all WebSonic custom elements.
+ * 
+ * DESIGN PATTERN:
+ * - Uses Shadow DOM by default for professional encapsulation.
+ * - Integrates global Tailwind v4 utilities via sharedStyles.
+ * - Components can extend styles by spreading: 
+ *   static override styles = [...BaseElement.styles, css` ... `];
  */
 export class BaseElement extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-      width: 100%;
-    }
-  `;
-  // Common functionality can be added here (e.g., analytics, theme helpers)
-  
-  // By default, we use Light DOM for Tailwind v4 compatibility in this specific setup, 
-  // or we could use Shadow DOM with adoptedStyleSheets. 
-  // Given the user wants "straightforward" and "no garbage", 
-  // staying with the current Shadow DOM render root bypass (createRenderRoot) 
-  // facilitates easy Tailwind utility usage.
-  createRenderRoot() {
-    return this;
-  }
+  static styles: any = [...sharedStyles];
 }

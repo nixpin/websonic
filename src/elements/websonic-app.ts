@@ -6,6 +6,8 @@ import { BaseElement } from './base-element';
 import { subsonicContext } from '../context/subsonic-context';
 import { SubsonicClient } from '../sdk/subsonic';
 import { AuthService } from '../services/auth-service';
+import { QueueService } from '../services/queue-service';
+import { PlayerService } from '../services/player-service';
 
 // Registration of layout and view components
 import '../components/websonic-shell';
@@ -42,7 +44,11 @@ export class WebSonicApp extends BaseElement {
       this.isAuthenticated = AuthService.isAuthenticated();
       if (this.isAuthenticated) {
         const config = AuthService.getActiveConfig();
-        if (config) this.subsonicClient = new SubsonicClient(config);
+        if (config) {
+          this.subsonicClient = new SubsonicClient(config);
+          QueueService.setClient(this.subsonicClient);
+          PlayerService.setClient(this.subsonicClient);
+        }
       }
     });
 
@@ -50,6 +56,8 @@ export class WebSonicApp extends BaseElement {
     const config = AuthService.getActiveConfig();
     if (config) {
       this.subsonicClient = new SubsonicClient(config);
+      QueueService.setClient(this.subsonicClient);
+      PlayerService.setClient(this.subsonicClient);
     }
   }
 
