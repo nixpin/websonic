@@ -2,6 +2,11 @@
 
 A high-fidelity, analog-inspired web remote for Subsonic-compatible music servers (optimized for Gonic).
 
+### 🌐 Demo
+[**websonic.pages.dev**](https://websonic.pages.dev/)
+> [!IMPORTANT]
+> A running **Gonic** or other **Subsonic-compatible** server is required for the demo to function.
+
 ![Player View](doc/player.png)
 *Analog interface with Gold accents*
 

@@ -1,6 +1,7 @@
 import { html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { BaseElement } from '../elements/base-element';
+import { PlayerService } from '../services/player-service';
 
 /**
  * WebSonic Player Display
@@ -20,9 +21,7 @@ export class WebSonicPlayerDisplay extends BaseElement {
     super.connectedCallback();
     window.addEventListener('websonic-player-state-changed', this._onStateChanged);
     
-    import('../services/player-service').then(m => {
-       this.isPlaying = m.PlayerService.getInstance().getState().isPlaying;
-    });
+    this.isPlaying = PlayerService.getInstance().getState().isPlaying;
   }
 
   disconnectedCallback() {
@@ -31,15 +30,15 @@ export class WebSonicPlayerDisplay extends BaseElement {
   }
 
   private _togglePlay() {
-    import('../services/player-service').then(m => m.PlayerService.getInstance().togglePlayback());
+    PlayerService.getInstance().togglePlayback();
   }
 
   private _next() {
-    import('../services/player-service').then(m => m.PlayerService.getInstance().next());
+    PlayerService.getInstance().next();
   }
 
   private _prev() {
-    import('../services/player-service').then(m => m.PlayerService.getInstance().prev());
+    PlayerService.getInstance().prev();
   }
 
   static styles = [
