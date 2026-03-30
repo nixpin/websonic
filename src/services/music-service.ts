@@ -57,7 +57,7 @@ export class MusicService {
     return MusicService.instance;
   }
 
-  private async fetchSubsonic(method: string, params: Record<string, string> = {}) {
+  private async fetchSubsonic(method: string, params: Record<string, string | string[]> = {}) {
     const config = AuthService.getActiveConfig();
     if (!config) throw new Error('No active Subsonic configuration');
 
@@ -70,7 +70,11 @@ export class MusicService {
     url.searchParams.set('f', 'json');
 
     Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.set(key, value);
+      if (Array.isArray(value)) {
+        value.forEach(v => url.searchParams.append(key, v));
+      } else {
+        url.searchParams.set(key, value);
+      }
     });
 
     const response = await fetch(url.toString());
@@ -191,6 +195,24 @@ export class MusicService {
     }));
   }
 
+  async getPlaylistSongs(id: string): Promise<Song[]> {
+    const data = await this.fetchSubsonic('getPlaylist', { id });
+    const songs = data.playlist?.entry || [];
+    
+    return songs.map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      artist: s.artist,
+      artistId: s.artistId,
+      album: s.album,
+      albumId: s.albumId,
+      duration: s.duration,
+      coverArt: s.coverArt,
+      bitRate: s.bitRate,
+      suffix: s.suffix
+    }));
+  }
+
   async getAlbums(type: string = 'newest', size: number = 50, offset: number = 0): Promise<Album[]> {
     const data = await this.fetchSubsonic('getAlbumList2', {
       type,
@@ -209,6 +231,40 @@ export class MusicService {
       coverArt: a.coverArt,
       songCount: a.songCount
     }));
+  }
+
+  async createPlaylist(name: string, songIds?: string[]): Promise<Playlist> {
+    const params: Record<string, string | string[]> = { name };
+    if (songIds && songIds.length > 0) {
+      params.songId = songIds;
+    }
+    const data = await this.fetchSubsonic('createPlaylist', params);
+    return data.playlist;
+  }
+
+  async updatePlaylist(playlistId: string, options: { 
+    name?: string, 
+    comment?: string, 
+    public?: boolean, 
+    addSongIds?: string[], 
+    removeIndices?: number[] 
+  }): Promise<void> {
+    const params: Record<string, string | string[]> = { playlistId };
+    if (options.name) params.name = options.name;
+    if (options.comment) params.comment = options.comment;
+    if (options.public !== undefined) params.public = options.public.toString();
+    if (options.addSongIds && options.addSongIds.length > 0) {
+      params.songIdToAdd = options.addSongIds;
+    }
+    if (options.removeIndices && options.removeIndices.length > 0) {
+      params.songIndexToRemove = options.removeIndices.map(i => i.toString());
+    }
+    
+    await this.fetchSubsonic('updatePlaylist', params);
+  }
+
+  async deletePlaylist(id: string): Promise<void> {
+    await this.fetchSubsonic('deletePlaylist', { id });
   }
 
   getCoverArtUrl(id: string, size: number = 300): string {
