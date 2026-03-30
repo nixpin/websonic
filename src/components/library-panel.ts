@@ -23,8 +23,10 @@ export class LibraryPanel extends BaseElement {
   @state() selectedArtistId: string | null = null;
   @state() selectedArtist: Artist | null = null;
   @state() artistAlbums: Album[] = [];
-  @state() expandedAlbumId: string | null = null;
+  @state() expandedAlbumIds: Set<string> = new Set();
+  @state() expandedPlaylistIds: Set<string> = new Set();
   @state() albumSongs: { [id: string]: Song[] } = {};
+  @state() playlistSongs: { [id: string]: Song[] } = {};
 
   private readonly itemsPerPage = 20;
 
@@ -114,12 +116,14 @@ export class LibraryPanel extends BaseElement {
   }
 
   async toggleAlbum(id: string) {
-      if (this.expandedAlbumId === id) {
-          this.expandedAlbumId = null;
+      if (this.expandedAlbumIds.has(id)) {
+          this.expandedAlbumIds.delete(id);
+          this.expandedAlbumIds = new Set(this.expandedAlbumIds); // Trigger update
           return;
       }
 
-      this.expandedAlbumId = id;
+      this.expandedAlbumIds.add(id);
+      this.expandedAlbumIds = new Set(this.expandedAlbumIds); // Trigger update
       
       // Fetch if not in cache
       if (!this.albumSongs[id]) {
@@ -136,11 +140,36 @@ export class LibraryPanel extends BaseElement {
       }
   }
 
+  async togglePlaylist(id: string) {
+      if (this.expandedPlaylistIds.has(id)) {
+          this.expandedPlaylistIds.delete(id);
+          this.expandedPlaylistIds = new Set(this.expandedPlaylistIds); // Trigger update
+          return;
+      }
+
+      this.expandedPlaylistIds.add(id);
+      this.expandedPlaylistIds = new Set(this.expandedPlaylistIds); // Trigger update
+      
+      // Fetch if not in cache
+      if (!this.playlistSongs[id]) {
+          try {
+              const musicService = MusicService.getInstance();
+              const songs = await musicService.getPlaylistSongs(id);
+              this.playlistSongs = { 
+                  ...this.playlistSongs, 
+                  [id]: songs 
+              };
+          } catch (e) {
+              console.error('Failed to fetch playlist songs', e);
+          }
+      }
+  }
+
   private goBackToList() {
       this.selectedArtistId = null;
       this.selectedArtist = null;
       this.artistAlbums = [];
-      this.expandedAlbumId = null;
+      this.expandedAlbumIds = new Set();
   }
 
   setTab(tab: LibraryTab) {
@@ -148,7 +177,8 @@ export class LibraryPanel extends BaseElement {
     this.currentPage = 1;
     this.totalPages = 1; 
     this.selectedArtistId = null; // Reset artist view when tab changes
-    this.expandedAlbumId = null;
+    this.expandedAlbumIds = new Set();
+    this.expandedPlaylistIds = new Set();
     this.fetchData();
   }
 
@@ -262,7 +292,7 @@ export class LibraryPanel extends BaseElement {
                       <h4 class="text-[10px] font-black text-[#4a3b2a] opacity-60 uppercase tracking-[0.3em] mb-4 border-b border-[#4a3b2a]/20 pb-1">Albums</h4>
                       <div class="flex flex-col gap-2">
                           ${this.artistAlbums.map(album => {
-                              const isExpanded = this.expandedAlbumId === album.id;
+                              const isExpanded = this.expandedAlbumIds.has(album.id);
                               const songs = this.albumSongs[album.id] || [];
 
                               return html`
@@ -377,6 +407,11 @@ export class LibraryPanel extends BaseElement {
       PlaybackService.addAlbumToQueue(albumId);
   }
 
+  private async handleQueuePlaylist(playlistId: string) {
+      this.triggerFeedback(playlistId);
+      PlaybackService.addPlaylistToQueue(playlistId);
+  }
+
   private triggerFeedback(id: string) {
       this.pendingIds.add(id);
       this.requestUpdate();
@@ -412,17 +447,69 @@ export class LibraryPanel extends BaseElement {
       }
 
       if (this.activeTab === 'playlists') {
-          return this.playlists.map(p => html`
-            <div class="flex items-center gap-3 p-2 border-b border-[#4a3b2a]/5 hover:bg-[#4a3b2a]/5 transition-colors cursor-pointer group">
-                <div class="w-10 h-10 bg-[#4a3b2a]/10 rounded flex items-center justify-center opacity-30">
-                    <svg class="w-5 h-5 text-[#4a3b2a]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 9H2v2h17V9zm0-4H2v2h17V5zM2 15h13v-2H2v2zm15-2v6l5-3-5-3z"/></svg>
+          return this.playlists.map(p => {
+              const isExpanded = this.expandedPlaylistIds.has(p.id);
+              const songs = this.playlistSongs[p.id] || [];
+
+              return html`
+                <div class="flex flex-col bg-white/5 border border-transparent hover:border-[#4a3b2a]/20 transition-all rounded-sm mb-1">
+                    <div @click=${() => this.togglePlaylist(p.id)}
+                         class="flex items-center gap-3 p-2 cursor-pointer group">
+                        <div class="w-10 h-10 bg-[#4a3b2a]/10 rounded flex items-center justify-center opacity-30 group-hover:opacity-60 transition-opacity">
+                            <svg class="w-5 h-5 text-[#4a3b2a]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 9H2v2h17V9zm0-4H2v2h17V5zM2 15h13v-2H2v2zm15-2v6l5-3-5-3z"/></svg>
+                        </div>
+                        <div class="flex flex-col flex-1">
+                            <span class="text-sm font-bold text-[#4a3b2a]">${p.name}</span>
+                            <span class="text-[10px] text-[#4a3b2a]/50 italic uppercase font-black tracking-tighter">${p.songCount || 0} Tracks</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueuePlaylist(p.id); }}
+                                    class="p-1.5 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(p.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-30'} hover:opacity-100 transition-all group/add" title="Add all to queue">
+                                ${this.pendingIds.has(p.id) ? html`
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                ` : html`
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                `}
+                            </button>
+                            <div class="pr-2 opacity-20 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-[#a17c2f]' : ''}">
+                                <svg class="w-4 h-4 text-[#4a3b2a] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="song-list ${isExpanded ? 'expanded' : ''} bg-[#4a3b2a]/5">
+                        ${isExpanded && songs.length === 0 ? html`
+                            <div class="p-4 flex justify-center">
+                                <div class="w-4 h-4 border-2 border-[#4a3b2a]/20 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        ` : songs.map((song, index) => html`
+                            <div class="flex items-center gap-3 py-2 px-4 hover:bg-[#4a3b2a]/10 transition-colors group/song border-b border-[#4a3b2a]/10 last:border-0 overflow-hidden">
+                                <span class="text-[9px] font-black text-[#4a3b2a]/40 w-4 group-hover/song:text-[#4a3b2a]/80">${index + 1}</span>
+                                <div class="flex flex-col flex-1 min-w-0">
+                                    <span class="text-xs font-bold text-[#4a3b2a] truncate group-hover/song:text-black">${song.title}</span>
+                                    <div class="flex items-center gap-1.5 opacity-70">
+                                        <span class="text-[8px] font-black uppercase tracking-widest ${song.suffix?.toLowerCase() === 'flac' ? 'text-[#8b5e1a]' : 'text-[#4a3b2a]'}">
+                                            ${song.suffix || 'mp3'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[9px] font-bold text-[#4a3b2a]/60">${this.formatDuration(song.duration)}</span>
+                                    <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueueSong(song); }}
+                                            class="p-1 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(song.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-0 group-hover/song:opacity-50 hover:!opacity-100'} transition-all" title="Add to queue">
+                                        ${this.pendingIds.has(song.id) ? html`
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                        ` : html`
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                        `}
+                                    </button>
+                                </div>
+                            </div>
+                        `)}
+                    </div>
                 </div>
-                <div class="flex flex-col">
-                    <span class="text-sm font-bold text-[#4a3b2a]">${p.name}</span>
-                    <span class="text-[10px] text-[#4a3b2a]/50 italic uppercase font-black tracking-tighter">${p.songCount || 0} Tracks</span>
-                </div>
-            </div>
-          `);
+              `;
+          });
       }
 
       return html`<div class="opacity-20 text-center p-12 italic text-sm">Library is currently silent.</div>`;

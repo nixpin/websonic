@@ -191,6 +191,24 @@ export class MusicService {
     }));
   }
 
+  async getPlaylistSongs(id: string): Promise<Song[]> {
+    const data = await this.fetchSubsonic('getPlaylist', { id });
+    const songs = data.playlist?.entry || [];
+    
+    return songs.map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      artist: s.artist,
+      artistId: s.artistId,
+      album: s.album,
+      albumId: s.albumId,
+      duration: s.duration,
+      coverArt: s.coverArt,
+      bitRate: s.bitRate,
+      suffix: s.suffix
+    }));
+  }
+
   async getAlbums(type: string = 'newest', size: number = 50, offset: number = 0): Promise<Album[]> {
     const data = await this.fetchSubsonic('getAlbumList2', {
       type,

@@ -67,4 +67,17 @@ export class PlaybackService {
       console.error('PlaybackService: Failed to add album to queue', e);
     }
   }
+
+  /**
+   * Fetches all songs of a playlist and adds them to the queue
+   */
+  static async addPlaylistToQueue(playlistId: string) {
+    try {
+      const musicService = MusicService.getInstance();
+      const songs = await musicService.getPlaylistSongs(playlistId);
+      await this.addToQueue(songs);
+    } catch (e) {
+      console.error('PlaybackService: Failed to add playlist to queue', e);
+    }
+  }
 }
