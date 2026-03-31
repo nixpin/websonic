@@ -34,6 +34,8 @@ export class LibraryPanel extends BaseElement {
     @state() private pendingIds: Set<string> = new Set();
     @state() private loadingPlaylists = false;
     @state() private playlistSearchQuery = '';
+    @state() private artistSearchQuery = '';
+    private allArtistsCache: Artist[] | null = null;
 
     private readonly itemsPerPage = 20;
 
@@ -92,6 +94,7 @@ export class LibraryPanel extends BaseElement {
 
     willUpdate(changedProperties: Map<string, any>) {
         if (changedProperties.has('isOpen') && this.isOpen) {
+            this.allArtistsCache = null;
             this.fetchData();
         }
     }
@@ -106,9 +109,19 @@ export class LibraryPanel extends BaseElement {
             let fetchedItems: any[] = [];
 
             if (this.activeTab === 'artists') {
-                const allArtists = await musicService.getArtists(0, 5000);
-                this.artists = allArtists.slice(offset, offset + this.itemsPerPage);
-                this.totalPages = Math.ceil(allArtists.length / this.itemsPerPage);
+                if (!this.allArtistsCache) {
+                    // !!!! LOADING ALL ARTISTS AT ONCE (UP TO 15000) FOR INSTANT LOCAL SEARCH
+                    this.allArtistsCache = await musicService.getArtists(0, 15000);
+                }
+
+                let filteredArtists = this.allArtistsCache;
+                if (this.artistSearchQuery) {
+                    const query = this.artistSearchQuery.toLowerCase();
+                    filteredArtists = filteredArtists.filter(a => a.name.toLowerCase().includes(query));
+                }
+
+                this.artists = filteredArtists.slice(offset, offset + this.itemsPerPage);
+                this.totalPages = Math.ceil(filteredArtists.length / this.itemsPerPage) || 1;
             } else if (this.activeTab === 'genres') {
                 fetchedItems = await musicService.getGenres(offset, requestSize);
                 if (fetchedItems.length > this.itemsPerPage) {
@@ -202,6 +215,7 @@ export class LibraryPanel extends BaseElement {
         this.currentPage = 1;
         this.totalPages = 1;
         this.selectedArtistId = null;
+        this.artistSearchQuery = '';
         this.expandedAlbumIds = new Set();
         this.expandedPlaylistIds = new Set();
         this.fetchData();
@@ -322,15 +336,15 @@ export class LibraryPanel extends BaseElement {
     }
 
     private cleanMetadata(str?: string): string {
-      if (!str) return 'Unknown';
-      // If it's a path, take the last part
-      if (str.includes('/') || str.includes('\\')) {
-          return str.split(/[/\\]/).pop() || str;
-      }
-      return str;
-  }
+        if (!str) return 'Unknown';
+        // If it's a path, take the last part
+        if (str.includes('/') || str.includes('\\')) {
+            return str.split(/[/\\]/).pop() || str;
+        }
+        return str;
+    }
 
-  private handleQueueSong(song: Song) {
+    private handleQueueSong(song: Song) {
         this.triggerFeedback(song.id);
         PlaybackService.addToQueue([song]);
     }
@@ -550,12 +564,43 @@ export class LibraryPanel extends BaseElement {
 
     private renderList() {
         if (this.activeTab === 'artists') {
-            return this.artists.map(a => html`
-          <div @click=${() => this.handleArtistClick(a.id)} class="flex items-center gap-3 p-2 border-b border-[#4a3b2a]/5 hover:bg-[#4a3b2a]/5 transition-colors cursor-pointer group">
-              <div class="w-10 h-10 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity">${ICONS.ARTIST}</div>
-              <div class="flex flex-col"><span class="text-sm font-bold text-[#4a3b2a]">${a.name}</span><span class="text-[10px] text-[#4a3b2a]/50 italic">${a.albumCount || 0} Albums</span></div>
-          </div>
-        `);
+            return html`
+              <div class="mb-4 px-1">
+                 <div class="relative">
+                    <input type="text"
+                           .value=${this.artistSearchQuery}
+                           @input=${(e: Event) => {
+                    this.artistSearchQuery = (e.target as HTMLInputElement).value;
+                    this.currentPage = 1;
+                    this.fetchData();
+                }}
+                           placeholder="Search artists..."
+                           class="w-full bg-[#4a3b2a]/5 border border-[#4a3b2a]/10 rounded px-3 py-2 pr-8 text-xs sm:text-sm text-[#4a3b2a] focus:outline-none focus:border-[#4a3b2a]/30 focus:bg-[#4a3b2a]/10 placeholder:opacity-50 font-medium transition-colors" />
+                    ${this.artistSearchQuery ? html`
+                        <button @click=${() => {
+                        this.artistSearchQuery = '';
+                        this.currentPage = 1;
+                        this.fetchData();
+                    }} class="absolute right-2 top-1/2 -translate-y-1/2 text-[#4a3b2a] opacity-40 hover:opacity-100 p-1 flex items-center justify-center cursor-pointer transition-opacity">
+                            <div class="scale-75 origin-center">${ICONS.CLOSE_BOLD}</div>
+                        </button>
+                    ` : ''}
+                 </div>
+              </div>
+              <div class="flex flex-col gap-1">
+                  ${this.artists.map(a => html`
+                      <div @click=${() => this.handleArtistClick(a.id)} class="flex items-center gap-3 p-2 border-b border-[#4a3b2a]/5 hover:bg-[#4a3b2a]/5 transition-colors cursor-pointer group">
+                          <div class="w-10 h-10 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity">${ICONS.ARTIST}</div>
+                          <div class="flex flex-col"><span class="text-sm font-bold text-[#4a3b2a]">${a.name}</span><span class="text-[10px] text-[#4a3b2a]/50 italic">${a.albumCount || 0} Albums</span></div>
+                      </div>
+                  `)}
+                  ${this.artists.length === 0 && !this.loading ? html`
+                      <div class="text-[10px] text-[#4a3b2a]/40 italic py-8 text-center px-4">
+                          No artists matching "${this.artistSearchQuery}"
+                      </div>
+                  ` : ''}
+              </div>
+            `;
         }
         if (this.activeTab === 'genres') {
             return this.genres.map(g => html`
