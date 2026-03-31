@@ -28,6 +28,7 @@ A high-fidelity, analog-inspired web remote for Subsonic-compatible music server
 - [x] Now Playing (Album Art, Song Info, Progress Bar)
 - [x] Playback Controls (Play, Pause, Next, Previous)
 - [x] Playlist Management (Create, Edit, Delete, Play)
+- [ ] Integration with DSP (Digital Signal Processing)
 - [ ] Favorites
 - [ ] Rating
 - [ ] Track Pre-listening / Previewing
