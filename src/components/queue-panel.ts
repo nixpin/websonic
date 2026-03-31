@@ -37,37 +37,51 @@ export class QueuePanel extends BaseElement {
 
   private _onStateChanged = (e: Event) => {
     const status = (e as CustomEvent).detail;
-    this.reconcileAndSetState(status.items, status.currentIndex, status.position, status.isPlaying, status.gain);
+    const currentItems = status.items || this.queueState.items;
+    this.reconcileAndSetState(currentItems, status.currentIndex, status.position, status.isPlaying, status.gain);
+  };
+
+  private _onQueueChanged = (e: Event) => {
+    const customEvent = e as CustomEvent;
+    if (customEvent.detail) {
+      const newState = customEvent.detail;
+      this.reconcileAndSetState(newState.items, newState.currentIndex, newState.position, newState.isPlaying, newState.gain);
+    } else {
+      this.refreshQueue();
+    }
   };
 
   private reconcileAndSetState(items: any[], currentIndex: number, position: number, isPlaying: boolean, gain: number) {
     const nextRemovedKeys = new Set<string>();
-    this.removedKeys.forEach(key => {
-      const [indexStr, id] = key.split('-');
-      const idx = parseInt(indexStr);
-      if (items[idx] && items[idx].id === id) {
-        nextRemovedKeys.add(key);
-      }
-    });
+    if (items) {
+      this.removedKeys.forEach(key => {
+        const [indexStr, id] = key.split('-');
+        const idx = parseInt(indexStr);
+        if (items[idx] && items[idx].id === id) {
+          nextRemovedKeys.add(key);
+        }
+      });
+    }
     this.removedKeys = nextRemovedKeys;
 
-    this.queueState = { items, currentIndex, position, isPlaying, gain };
+    this.queueState = { items: items || [], currentIndex, position, isPlaying, gain };
   }
 
   connectedCallback() {
     super.connectedCallback();
     window.addEventListener('websonic-player-state-changed', this._onStateChanged);
-    window.addEventListener('websonic-queue-changed', () => this.refreshQueue());
+    window.addEventListener('websonic-queue-changed', this._onQueueChanged);
 
     const status = PlayerService.getInstance().getState();
     if (status) {
-      this.reconcileAndSetState(status.items, status.currentIndex, status.position, status.isPlaying, status.gain);
+      const currentItems = (status as any).items || this.queueState.items;
+      this.reconcileAndSetState(currentItems, status.currentIndex, status.position, status.isPlaying, status.gain);
     }
   }
 
   disconnectedCallback() {
     window.removeEventListener('websonic-player-state-changed', this._onStateChanged);
-    window.removeEventListener('websonic-queue-changed', () => this.refreshQueue());
+    window.removeEventListener('websonic-queue-changed', this._onQueueChanged);
     super.disconnectedCallback();
   }
 
@@ -172,9 +186,8 @@ export class QueuePanel extends BaseElement {
   }
 
   render() {
-    const pendingItems = QueueService.getPendingItems();
     const visibleItemsCount = this.queueState.items.filter((item, i) => !this.removedKeys.has(`${i}-${item.id}`)).length;
-    const hasItems = visibleItemsCount > 0 || pendingItems.length > 0;
+    const hasItems = visibleItemsCount > 0;
 
     return html`
         <div class="h-full bg-[#e8d5b1] border-l border-[#d3c29d] shadow-[-10px_0_30px_rgba(0,0,0,0.3)] transition-transform duration-500 ease-in-out pointer-events-auto overflow-hidden relative"
@@ -218,8 +231,8 @@ export class QueuePanel extends BaseElement {
                        <p class="text-[#4a3b2a] italic text-sm text-center px-4">The air is silent. No melodies have been summoned yet.</p>
                     </div>
                  ` : html`
-                   <div class="flex flex-col gap-1">
-                      ${this.queueState.items.map((item, index) => {
+                    <div class="flex flex-col gap-1">
+                       ${this.queueState.items.map((item, index) => {
       if (this.removedKeys.has(`${index}-${item.id}`)) return null;
       const isCurrent = index === this.queueState.currentIndex;
 
@@ -228,11 +241,11 @@ export class QueuePanel extends BaseElement {
                                       ${isCurrent ? 'bg-[#4a3b2a]/10 border-[#4a3b2a]/20' : ''}
                                       ${this.draggedIndex === index ? 'dragging' : ''}
                                       ${this.dragOverIndex === index ? 'drag-over' : ''}"
-                               draggable="true"
-                               @dragstart=${(e: DragEvent) => this.handleDragStart(e, index)}
-                               @dragover=${(e: DragEvent) => this.handleDragOver(e, index)}
-                               @dragend=${this.handleDragEnd}
-                               @drop=${(e: DragEvent) => this.handleDrop(e, index)}>
+                                draggable="true"
+                                @dragstart=${(e: DragEvent) => this.handleDragStart(e, index)}
+                                @dragover=${(e: DragEvent) => this.handleDragOver(e, index)}
+                                @dragend=${this.handleDragEnd}
+                                @drop=${(e: DragEvent) => this.handleDrop(e, index)}>
                              
                              <!-- Drag Handle -->
                              <div class="flex items-center w-4 text-[#4a3b2a] opacity-50 group-hover:opacity-100 group-hover:text-[#a17c2f] transition-all cursor-grab">
@@ -262,24 +275,7 @@ export class QueuePanel extends BaseElement {
                           </div>
                         `;
     })}
-
-                      ${pendingItems.map((item, index) => {
-      const overallIndex = this.queueState.items.length + index + 1;
-      return html`
-                          <div class="flex items-center gap-2 p-1.5 border-b border-[#4a3b2a]/5 opacity-40 grayscale-[0.5]">
-                             <div class="w-4"></div>
-                             <span class="text-[9px] font-mono opacity-30 w-4 pl-1">${overallIndex}</span>
-                             <div class="flex flex-col flex-1 overflow-hidden">
-                                <span class="text-sm font-bold text-[#4a3b2a] truncate">${item.title}</span>
-                                <div class="flex items-center gap-2">
-                                  <span class="text-xs text-[#4a3b2a]/60 italic truncate">${item.artist}</span>
-                                  <div class="w-2 h-2 border border-[#4a3b2a]/20 border-t-transparent rounded-full animate-spin"></div>
-                                </div>
-                             </div>
-                          </div>
-                        `;
-    })}
-                   </div>
+                    </div>
                  `}
              </div>
           </div>

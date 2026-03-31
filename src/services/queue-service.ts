@@ -26,86 +26,81 @@ export interface QueueState {
  */
 export class QueueService {
   private static client: SubsonicClient | null = null;
-  private static _pendingItems: QueueItem[] = [];
+  private static _intervalId: any = null;
+  private static _lastState: QueueState | null = null;
 
   /**
    * Initialize the service with a Subsonic client instance.
    */
   static setClient(client: SubsonicClient) {
     this.client = client;
+    this.startPolling();
   }
 
-  static getPendingItems(): QueueItem[] {
-    return [...this._pendingItems];
+  static startPolling() {
+    if (this._intervalId) return;
+    this.refresh();
+    this._intervalId = setInterval(() => this.refresh(), 5000);
+  }
+
+  static stopPolling() {
+    if (this._intervalId) {
+      clearInterval(this._intervalId);
+      this._intervalId = null;
+    }
+  }
+
+  static async refresh() {
+    const state = await this.fetchQueue();
+    
+    window.dispatchEvent(new CustomEvent('websonic-queue-changed', {
+      detail: state
+    }));
+  }
+
+  private static async fetchJukeboxState(): Promise<QueueState | null> {
+    if (!this.client) return null;
+
+    try {
+      const response = await this.client.jukeboxControl('get');
+      const jukebox = response.jukeboxPlaylist || response.jukeboxStatus;
+      if (!jukebox) return null;
+
+      const items = jukebox.entry ? this.mapEntries(jukebox.entry) : [];
+      const currentIndex = (jukebox.currentIndex !== undefined && jukebox.currentIndex !== null) ? Number(jukebox.currentIndex) : -1;
+      const position = jukebox.position !== undefined ? Number(jukebox.position) : 0;
+      const isPlaying = jukebox.playing === 'true' || jukebox.playing === true;
+      const gain = (jukebox.gain !== undefined && jukebox.gain !== null) ? Number(jukebox.gain) : 0.3;
+
+      return { items, currentIndex, position, isPlaying, gain };
+    } catch (e: any) {
+      if (!e.message?.includes('not found') && !e.message?.includes('70')) {
+        throw e;
+      }
+      return null;
+    }
   }
 
   /**
-   * Fetches the current jukebox or play queue from the server.
+   * Fetches the current jukebox queue from the server.
+   * Updates the static items array.
    */
   static async fetchQueue(): Promise<QueueState> {
+    const defaultState: QueueState = { items: [], currentIndex: -1, position: 0, isPlaying: false, gain: 0.3 };
+
     if (!this.client) {
       console.warn('QueueService: No Subsonic client initialized.');
-      return { items: [], currentIndex: -1, position: 0, isPlaying: false, gain: 1 };
+      return defaultState;
     }
 
     try {
-      let serverItems: QueueItem[] = [];
-      let currentIndex = -1;
-      let position = 0;
-      let isPlaying = false;
-      let gain = 1;
-
-      // 1. Try Jukebox Control first (Server-side hardware playback)
-      try {
-        const response = await this.client.jukeboxControl('get');
-        const jukebox = response.jukeboxPlaylist || response.jukeboxStatus;
-        if (jukebox) {
-          serverItems = jukebox.entry ? this.mapEntries(jukebox.entry) : [];
-          currentIndex = (jukebox.currentIndex !== undefined && jukebox.currentIndex !== null) ? Number(jukebox.currentIndex) : -1;
-          position = jukebox.position !== undefined ? Number(jukebox.position) : 0;
-          isPlaying = jukebox.playing === 'true' || jukebox.playing === true;
-          // Gonic returns float 0.0 to 1.0. 
-          gain = (jukebox.gain !== undefined && jukebox.gain !== null) ? Number(jukebox.gain) : 1;
-        }
-      } catch (e: any) {
-        if (!e.message?.includes('not found') && !e.message?.includes('70')) {
-          throw e;
-        }
-
-        // 2. Fallback to getPlayQueue (User-specific session/streaming queue)
-        const response = await this.client.getPlayQueue();
-        const playQueue = response.playQueue;
-
-        if (playQueue && (playQueue.entry || playQueue.current)) {
-          serverItems = playQueue.entry ? this.mapEntries(playQueue.entry) : [];
-          if (playQueue.current !== undefined) {
-            const currentRef = String(playQueue.current);
-            currentIndex = serverItems.findIndex(i => i.id === currentRef);
-            if (currentIndex === -1 && !isNaN(Number(currentRef))) {
-              currentIndex = Number(currentRef);
-            }
-          }
-          position = playQueue.position || 0;
-          isPlaying = currentIndex !== -1;
-        }
-      }
-
-      // Reconciliation: Remove pending items that are now present in serverItems
-      if (this._pendingItems.length > 0) {
-        const serverIds = new Set(serverItems.map(item => item.id));
-        this._pendingItems = this._pendingItems.filter(pending => !serverIds.has(pending.id));
-      }
-
-      return {
-        items: serverItems,
-        currentIndex,
-        position,
-        isPlaying,
-        gain
-      };
+      const state = await this.fetchJukeboxState();
+      const finalState = state || defaultState;
+      this._lastState = finalState;
+      return finalState;
     } catch (error) {
       console.error('QueueService: Queue retrieval failed:', error);
-      return { items: [], currentIndex: -1, position: 0, isPlaying: false, gain: 1 };
+      return { ...defaultState };
     }
   }
 
@@ -128,10 +123,16 @@ export class QueueService {
     }));
   }
 
+  // --- API Mutators ---
+
   static async clearQueue() {
     if (!this.client) return;
-    this._pendingItems = []; 
     return this.client.jukeboxControl('clear');
+  }
+
+  static async addSongs(items: QueueItem[]) {
+    if (!this.client || items.length === 0) return;
+    return this.client.jukeboxControl('add', { id: items.map(i => i.id) });
   }
 
   static async removeSong(index: number) {
@@ -139,40 +140,59 @@ export class QueueService {
     return this.client.jukeboxControl('remove', { index: index.toString() });
   }
 
-  static async next(currentIndex: number, totalItems: number) {
-    if (!this.client || currentIndex < 0 || totalItems === 0) return;
-    const targetIndex = (currentIndex + 1) % totalItems;
-    return this.client.jukeboxControl('skip', { index: targetIndex.toString() });
-  }
-
-  static async prev(currentIndex: number) {
-    if (!this.client || currentIndex < 0) return;
-    const targetIndex = Math.max(0, currentIndex - 1);
-    return this.client.jukeboxControl('skip', { index: targetIndex.toString(), offset: '0' });
+  static getCoverArtUrl(id: string, size: number = 400): string {
+    return this.client?.getCoverArtUrl(id, size) || '';
   }
 
   static async reorderQueue(items: QueueItem[]) {
     if (!this.client) return;
-    // Single atomic 'set' instead of clear + multiple additions
     return this.client.jukeboxControl('set', { id: items.map(i => i.id) });
   }
 
-  static async seek(index: number, offset: number) {
-    if (!this.client) return;
+  static async next() {
+    if (!this.client || !this._lastState || this._lastState.currentIndex < 0 || this._lastState.items.length === 0) return;
+    const targetIndex = (this._lastState.currentIndex + 1) % this._lastState.items.length;
+    return this.client.jukeboxControl('skip', { index: targetIndex.toString() });
+  }
+
+  static async prev() {
+    if (!this.client || !this._lastState || this._lastState.currentIndex < 0) return;
+    const targetIndex = Math.max(0, this._lastState.currentIndex - 1);
+    return this.client.jukeboxControl('skip', { index: targetIndex.toString(), offset: '0' });
+  }
+
+  static async jumpTo(index: number) {
+    if (!this.client || index < 0) return;
+    return this.client.jukeboxControl('skip', { index: index.toString(), offset: '0' });
+  }
+
+  static async seek(offset: number) {
+    if (!this.client || !this._lastState || this._lastState.currentIndex < 0) return;
     return this.client.jukeboxControl('skip', {
-      index: index.toString(),
+      index: this._lastState.currentIndex.toString(),
       offset: Math.round(offset).toString()
     });
   }
 
-  static async addSongs(items: QueueItem[]) {
-    if (!this.client || items.length === 0) return;
+  static async togglePlayback() {
+    if (!this.client || !this._lastState) return;
+    const action = this._lastState.isPlaying ? 'stop' : 'start';
+    return this.client.jukeboxControl(action);
+  }
 
-    // Optimistically add to local list
-    this._pendingItems = [...this._pendingItems, ...items];
-    window.dispatchEvent(new CustomEvent('websonic-queue-changed'));
+  static async start() {
+    if (!this.client) return;
+    return this.client.jukeboxControl('start');
+  }
 
-    // Single request with multiple IDs
-    return this.client.jukeboxControl('add', { id: items.map(i => i.id) });
+  static async stop() {
+    if (!this.client) return;
+    return this.client.jukeboxControl('stop');
+  }
+
+  static async setVolume(gain: number) {
+    if (!this.client) return;
+    const value = Math.max(0, Math.min(100, gain));
+    return this.client.jukeboxControl('setGain', { gain: (value / 100).toString() });
   }
 }
