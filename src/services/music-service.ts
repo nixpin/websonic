@@ -4,6 +4,7 @@ export interface Artist {
   id: string;
   name: string;
   albumCount?: number;
+  coverArt?: string;
   artistImageUrl?: string;
 }
 
@@ -162,6 +163,7 @@ export class MusicService {
         id: artist.id,
         name: artist.name,
         albumCount: artist.albumCount,
+        coverArt: artist.coverArt,
         artistImageUrl: artist.artistImageUrl
       },
       albums: albums.map((a: any) => ({
@@ -265,6 +267,47 @@ export class MusicService {
 
   async deletePlaylist(id: string): Promise<void> {
     await this.fetchSubsonic('deletePlaylist', { id });
+  }
+
+  async search(query: string, artistCount = 10, albumCount = 10, songCount = 10): Promise<{
+    artists: Artist[],
+    albums: Album[],
+    songs: Song[]
+  }> {
+    const data = await this.fetchSubsonic('search3', {
+      query,
+      artistCount: artistCount.toString(),
+      albumCount: albumCount.toString(),
+      songCount: songCount.toString()
+    });
+
+    const searchResult = data.searchResult3 || {};
+    
+    return {
+      artists: searchResult.artist || [],
+      albums: (searchResult.album || []).map((a: any) => ({
+        id: a.id,
+        name: a.title || a.name,
+        artist: a.artist,
+        artistId: a.artistId,
+        year: a.year,
+        genre: a.genre,
+        coverArt: a.coverArt,
+        songCount: a.songCount
+      })),
+      songs: (searchResult.song || []).map((s: any) => ({
+        id: s.id,
+        title: s.title,
+        artist: s.artist,
+        artistId: s.artistId,
+        album: s.album,
+        albumId: s.albumId,
+        duration: s.duration,
+        coverArt: s.coverArt,
+        bitRate: s.bitRate,
+        suffix: s.suffix
+      }))
+    };
   }
 
   getCoverArtUrl(id: string, size: number = 300): string {

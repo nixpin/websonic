@@ -22,12 +22,19 @@ A high-fidelity, analog-inspired web remote for Subsonic-compatible music server
 - [x] Auth (Subsonic Integration)
 - [ ] Music Library
     - [x] Artists, Genres, Playlists listing pages
-    - [ ] Filter by Artists, Albums, Genres, Search
-    - [ ] Play songs, albums, playlists
+    - [x] Filter by Artists
+    - [x] Search (hybrid)
 - [x] Queue Management (Add, Remove, Reorder, Play)
 - [x] Now Playing (Album Art, Song Info, Progress Bar)
 - [x] Playback Controls (Play, Pause, Next, Previous)
 - [x] Playlist Management (Create, Edit, Delete, Play)
+- [ ] Integration with DSP (Digital Signal Processing)
+- [ ] Favorites
+- [ ] Rating
+- [ ] Track Pre-listening / Previewing
+- [ ] Internet Radio Stations
+- [ ] Repeat mode (?)
+- [ ] Lyrics
 - [ ] High quality theme redesign
 - [ ] Refactor code
 - [ ] Multi-server Support (Add, Remove, Switch)
