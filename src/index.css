@@ -1,0 +1,12 @@
+@import "./style/theme.css";
+@import "./style/main.css";
+
+/* 
+ * Global production resets that shouldn't be duplicated 
+ * inside Shadow DOM components.
+ */
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-base);
+  overflow: hidden; /* App handles its own scrolling */
+}
