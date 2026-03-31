@@ -15,6 +15,7 @@ export class QueuePanel extends BaseElement {
   @state() private removedKeys: Set<string> = new Set(); // Format: "index-id"
   @state() private draggedIndex: number | null = null;
   @state() private dragOverIndex: number | null = null;
+  @state() private searchQuery: string = '';
 
   static styles = [
     ...BaseElement.styles,
@@ -88,6 +89,9 @@ export class QueuePanel extends BaseElement {
   updated(changedProperties: Map<string, any>) {
     if (changedProperties.has('isOpen') && this.isOpen) {
       this.refreshQueue();
+    } else if (changedProperties.has('isOpen') && !this.isOpen) {
+      // Clear search when panel closes
+      this.searchQuery = '';
     }
   }
 
@@ -96,6 +100,15 @@ export class QueuePanel extends BaseElement {
     const newState = await QueueService.fetchQueue();
     this.reconcileAndSetState(newState.items, newState.currentIndex, newState.position, newState.isPlaying, newState.gain);
     this.loading = false;
+  }
+
+  private handleSearch(e: Event) {
+    const target = e.target as HTMLInputElement;
+    this.searchQuery = target.value.toLowerCase();
+  }
+
+  private handleClearSearch() {
+    this.searchQuery = '';
   }
 
   private handleJumpTo(index: number, e: Event) {
@@ -186,58 +199,87 @@ export class QueuePanel extends BaseElement {
   }
 
   render() {
-    const visibleItemsCount = this.queueState.items.filter((item, i) => !this.removedKeys.has(`${i}-${item.id}`)).length;
-    const hasItems = visibleItemsCount > 0;
+    // 1. Filter out optimistically removed items and map them to retain original indices
+    const nonRemovedItems = this.queueState.items
+      .map((item, index) => ({ item, index }))
+      .filter(({ item, index }) => !this.removedKeys.has(`${index}-${item.id}`));
+      
+    const hasItems = nonRemovedItems.length > 0;
+
+    // 2. Apply search text query
+    const filteredItems = nonRemovedItems.filter(({ item }) => {
+      if (!this.searchQuery) return true;
+      const term = this.searchQuery;
+      return item.title.toLowerCase().includes(term) || item.artist.toLowerCase().includes(term);
+    });
 
     return html`
-        <div class="h-full bg-[#e8d5b1] border-l border-[#d3c29d] shadow-[-10px_0_30px_rgba(0,0,0,0.3)] transition-transform duration-500 ease-in-out pointer-events-auto overflow-hidden relative"
+        <div class="h-full bg-[#e8d5b1] border-l border-[#d3c29d] shadow-[-10px_0_30px_rgba(0,0,0,0.3)] transition-transform duration-500 ease-in-out pointer-events-auto overflow-hidden relative flex flex-col"
              style="transform: translateX(${this.isOpen ? '0' : '100%'})">
           
           <div class="absolute inset-0 opacity-[0.05] pointer-events-none" style="background-image: url('https://www.transparenttextures.com/patterns/cardboard-flat.png');"></div>
           <div class="absolute inset-0 bg-gradient-to-bl from-white/10 to-transparent pointer-events-none"></div>
 
-          <div class="relative p-6 h-full flex flex-col items-center">
-              <!-- Re-organized Header: Close on Left, Title on Right -->
+          <div class="relative p-6 px-4 sm:px-6 h-full flex flex-col w-full">
+              <!-- Header -->
               <div class="w-full flex items-center justify-between mb-2">
                 <div class="flex items-center">
                     <button @click=${this.handleClose} 
-                            class="text-[#4a3b2a] opacity-40 hover:opacity-100 transition-opacity p-2 -ml-3 mr-2 cursor-pointer" 
+                            class="text-[#4a3b2a] opacity-40 hover:opacity-100 transition-opacity p-2 -ml-3 mr-2 cursor-pointer flex-shrink-0" 
                             title="Close Queue">
                        ${ICONS.CLOSE_BOLD}
                     </button>
                     <h2 class="text-xl font-black text-[#4a3b2a] opacity-70 uppercase tracking-[0.3em] truncate">Play Queue</h2>
                 </div>
                 
-                <!-- NEW Clear Queue Button -->
                 ${hasItems ? html`
                     <button @click=${this.handleClearQueue} 
-                            class="text-[10px] font-black uppercase tracking-widest text-red-900/40 hover:text-red-800 transition-colors flex items-center gap-1 cursor-pointer" 
+                            class="text-[10px] font-black uppercase tracking-widest text-red-900/40 hover:text-red-800 transition-colors flex items-center gap-1 cursor-pointer flex-shrink-0 ml-2" 
                             title="Clear All Tracks">
-                       <span>Clear</span>
+                       <span class="hidden sm:inline">Clear</span>
                        ${ICONS.DELETE}
                     </button>
                 ` : ''}
               </div>
               
-             <div class="w-full h-px bg-[#4a3b2a] opacity-10 mb-4"></div>
+             <div class="w-full h-px bg-[#4a3b2a] opacity-10 mb-4 shrink-0"></div>
              
-             <div class="flex-1 w-full overflow-y-auto custom-scrollbar">
+             <!-- Search Filter -->
+             ${hasItems ? html`
+                 <div class="w-full mb-4 relative shrink-0">
+                    <input type="text"
+                           .value=${this.searchQuery}
+                           @input=${this.handleSearch}
+                           placeholder="Filter queue by title or artist..."
+                           class="w-full bg-[#4a3b2a]/5 border border-[#4a3b2a]/10 rounded px-3 py-2 pr-8 text-xs sm:text-sm text-[#4a3b2a] focus:outline-none focus:border-[#4a3b2a]/30 focus:bg-[#4a3b2a]/10 placeholder:opacity-50 font-medium transition-colors" />
+                    ${this.searchQuery ? html`
+                        <button @click=${this.handleClearSearch} class="absolute right-2 top-1/2 -translate-y-1/2 text-[#4a3b2a] opacity-40 hover:opacity-100 p-1 flex items-center justify-center cursor-pointer transition-opacity">
+                            <div class="scale-75 origin-center">${ICONS.CLOSE_BOLD}</div>
+                        </button>
+                    ` : ''}
+                 </div>
+             ` : ''}
+             
+             <div class="flex-1 w-full overflow-y-auto overflow-x-hidden custom-scrollbar pb-10">
                  ${this.loading && !hasItems ? html`
                    <div class="flex items-center justify-center h-24 opacity-40">
-                      <div class="animate-pulse font-serif italic">Accessing archive...</div>
+                      <div class="animate-pulse font-serif italic text-sm">Accessing archive...</div>
                    </div>
                  ` : !hasItems ? html`
                     <div class="flex items-center justify-center h-24 opacity-40">
                        <p class="text-[#4a3b2a] italic text-sm text-center px-4">The air is silent. No melodies have been summoned yet.</p>
                     </div>
+                 ` : filteredItems.length === 0 ? html`
+                    <div class="flex items-center justify-center h-24 opacity-40">
+                       <p class="text-[#4a3b2a] italic text-sm text-center px-4 font-serif">No matching tracks in the queue.</p>
+                    </div>
                  ` : html`
-                    <div class="flex flex-col gap-1">
-                       ${this.queueState.items.map((item, index) => {
-      if (this.removedKeys.has(`${index}-${item.id}`)) return null;
+                    <div class="flex flex-col gap-1 pr-1">
+                       ${filteredItems.map(({ item, index }) => {
       const isCurrent = index === this.queueState.currentIndex;
 
       return html`
-                          <div class="group flex items-center gap-2 p-1.5 border-b border-[#4a3b2a]/5 hover:bg-[#4a3b2a]/5 transition-all cursor-default
+                          <div class="group flex items-center gap-2 p-1.5 border-b border-[#4a3b2a]/5 hover:bg-[#4a3b2a]/5 transition-all cursor-default overflow-hidden rounded-sm
                                       ${isCurrent ? 'bg-[#4a3b2a]/10 border-[#4a3b2a]/20' : ''}
                                       ${this.draggedIndex === index ? 'dragging' : ''}
                                       ${this.dragOverIndex === index ? 'drag-over' : ''}"
@@ -248,28 +290,28 @@ export class QueuePanel extends BaseElement {
                                 @drop=${(e: DragEvent) => this.handleDrop(e, index)}>
                              
                              <!-- Drag Handle -->
-                             <div class="flex items-center w-4 text-[#4a3b2a] opacity-50 group-hover:opacity-100 group-hover:text-[#a17c2f] transition-all cursor-grab">
+                             <div class="flex items-center w-4 text-[#4a3b2a] opacity-50 group-hover:opacity-100 group-hover:text-[#a17c2f] transition-all cursor-grab shrink-0">
                                 ${ICONS.DRAG_HANDLE}
                              </div>
 
                              <!-- Play/Index Button -->
-                             <div class="relative w-5 h-5 flex items-center justify-center">
-                                <span class="text-[9px] font-mono opacity-30 group-hover:hidden ${isCurrent ? 'hidden' : ''}">${index + 1}</span>
+                             <div class="relative w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center shrink-0">
+                                <span class="text-[9px] font-mono opacity-40 group-hover:hidden ${isCurrent ? 'hidden' : ''}">${index + 1}</span>
                                 ${isCurrent ? html`<div class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse group-hover:hidden"></div>` : ''}
                                 <button @click=${(e: Event) => this.handleJumpTo(index, e)} 
-                                        class="hidden group-hover:flex w-5 h-5 items-center justify-center text-[#a17c2f] hover:scale-110 transition-transform cursor-pointer" 
+                                        class="hidden group-hover:flex w-full h-full items-center justify-center text-[#a17c2f] hover:scale-110 transition-transform cursor-pointer" 
                                         title="Play track">
                                    ${ICONS.PLAY}
                                 </button>
                              </div>
                              
-                             <div class="flex flex-col flex-1 overflow-hidden">
-                                <span class="text-sm font-bold text-[#4a3b2a] truncate group-hover:text-black">${item.title}</span>
+                             <div class="flex flex-col flex-1 min-w-0">
+                                <span class="text-sm font-bold text-[#4a3b2a] truncate group-hover:text-black transition-colors">${item.title}</span>
                                 <span class="text-xs text-[#4a3b2a]/60 italic truncate">${item.artist}</span>
                              </div>
 
                              <button @click=${(e: Event) => this.handleRemoveSong(index, item.id, e)} 
-                                     class="opacity-0 group-hover:opacity-100 flex w-6 h-6 items-center justify-center text-[#4a3b2a]/40 hover:text-red-800 transition-colors" title="Remove track">
+                                     class="opacity-0 group-hover:opacity-100 flex w-8 h-8 sm:w-6 sm:h-6 items-center justify-center text-[#4a3b2a]/40 hover:text-red-800 transition-colors shrink-0 cursor-pointer" title="Remove track">
                                  ${ICONS.REMOVE}
                              </button>
                           </div>
