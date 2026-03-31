@@ -505,9 +505,15 @@ export class LibraryPanel extends BaseElement {
                       <div class="font-serif italic text-sm">Loading artist bio...</div>
                   </div>
               ` : html`
-                  <div class="w-full bg-[#4a3b2a]/5 rounded-sm p-4 mb-8 border border-[#4a3b2a]/10 flex flex-col items-center text-center">
-                      <div class="w-24 h-24 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center mb-3 shadow-inner text-[#4a3b2a]/20">
-                          ${ICONS.ARTIST}
+                  <div class="w-full bg-[#4a3b2a]/5 rounded-sm p-6 mb-8 border border-[#4a3b2a]/10 flex flex-col items-center text-center">
+                      <div class="w-40 h-40 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center mb-4 shadow-xl text-[#4a3b2a]/20 overflow-hidden relative group-hover:shadow-[0_0_30px_rgba(161,124,47,0.4)] transition-all border-4 border-[#e8d5b1]">
+                          ${this.selectedArtist?.coverArt ? html`
+                              <img src="${musicService.getCoverArtUrl(this.selectedArtist.coverArt, 300)}" class="w-full h-full object-cover">
+                          ` : html`
+                              <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#4a3b2a]/5 to-[#4a3b2a]/20">
+                                  <div class="scale-[2.5]">${ICONS.ARTIST}</div>
+                              </div>
+                          `}
                       </div>
                       <h3 class="text-xl font-black text-[#4a3b2a] uppercase tracking-wide leading-tight">${this.selectedArtist?.name}</h3>
                       <p class="text-[10px] text-[#4a3b2a]/50 italic font-medium uppercase tracking-tighter mt-1">${this.selectedArtist?.albumCount || 0} Albums in playlist</p>
@@ -615,8 +621,17 @@ export class LibraryPanel extends BaseElement {
               <div class="flex flex-col gap-1">
                   ${this.artists.map(a => html`
                       <div @click=${() => this.handleArtistClick(a.id)} class="flex items-center gap-3 p-2 border-b border-[#4a3b2a]/5 hover:bg-[#4a3b2a]/5 transition-colors cursor-pointer group">
-                          <div class="w-10 h-10 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity">${ICONS.ARTIST}</div>
-                          <div class="flex flex-col"><span class="text-sm font-bold text-[#4a3b2a]">${a.name}</span><span class="text-[10px] text-[#4a3b2a]/50 italic">${a.albumCount || 0} Albums</span></div>
+                          <div class="w-10 h-10 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:shadow-md transition-all">
+                              ${a.coverArt ? html`
+                                  <img src="${musicService.getCoverArtUrl(a.coverArt, 150)}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                              ` : html`
+                                  <div class="opacity-40 group-hover:opacity-100 transition-opacity">${ICONS.ARTIST}</div>
+                              `}
+                          </div>
+                          <div class="flex flex-col min-w-0">
+                              <span class="text-sm font-bold text-[#4a3b2a] truncate">${a.name}</span>
+                              <span class="text-[10px] text-[#4a3b2a]/50 italic">${a.albumCount || 0} Albums</span>
+                          </div>
                       </div>
                   `)}
                   ${this.artists.length === 0 && !this.loading ? html`
@@ -710,8 +725,12 @@ export class LibraryPanel extends BaseElement {
                             <h4 class="text-[9px] font-black uppercase tracking-[0.3em] text-[#4a3b2a]/40 border-b border-[#4a3b2a]/10 pb-1 mx-1">Artists</h4>
                             ${this.searchResult.artists.map(a => html`
                                 <div @click=${() => this.handleArtistClick(a.id)} class="flex items-center gap-3 p-2 hover:bg-[#4a3b2a]/5 rounded-sm transition-colors cursor-pointer group">
-                                    <div class="w-8 h-8 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity">${ICONS.ARTIST}</div>
-                                    <span class="text-sm font-bold text-[#4a3b2a]">${a.name}</span>
+                                    <div class="w-8 h-8 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 group-hover:shadow-sm transition-all text-[#4a3b2a]/20">
+                                        ${a.coverArt ? html`
+                                            <img src="${musicService.getCoverArtUrl(a.coverArt, 100)}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                                        ` : ICONS.ARTIST}
+                                    </div>
+                                    <span class="text-sm font-bold text-[#4a3b2a] truncate">${a.name}</span>
                                 </div>
                             `)}
                         </div>

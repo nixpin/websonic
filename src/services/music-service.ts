@@ -4,6 +4,7 @@ export interface Artist {
   id: string;
   name: string;
   albumCount?: number;
+  coverArt?: string;
   artistImageUrl?: string;
 }
 
@@ -162,6 +163,7 @@ export class MusicService {
         id: artist.id,
         name: artist.name,
         albumCount: artist.albumCount,
+        coverArt: artist.coverArt,
         artistImageUrl: artist.artistImageUrl
       },
       albums: albums.map((a: any) => ({

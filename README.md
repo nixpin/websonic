@@ -31,6 +31,9 @@ A high-fidelity, analog-inspired web remote for Subsonic-compatible music server
 - [ ] Favorites
 - [ ] Rating
 - [ ] Track Pre-listening / Previewing
+- [ ] Internet Radio Stations
+- [ ] Repeat mode (?)
+- [ ] Lyrics
 - [ ] High quality theme redesign
 - [ ] Refactor code
 - [ ] Multi-server Support (Add, Remove, Switch)
