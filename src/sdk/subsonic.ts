@@ -20,7 +20,7 @@ export class SubsonicClient {
     return md5(password + salt).toString();
   }
 
-  private getAuthorizedUrl(method: string, params: Record<string, string> = {}): URL {
+  private getAuthorizedUrl(method: string, params: Record<string, any> = {}): URL {
     const url = new URL(`${this.config.baseUrl}/rest/${method}.view`);
     url.searchParams.set('u', this.config.userName);
     url.searchParams.set('t', this.config.token);
@@ -30,9 +30,8 @@ export class SubsonicClient {
     url.searchParams.set('f', 'json');
 
     Object.entries(params).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        value.forEach(v => url.searchParams.append(key, String(v)));
-      } else {
+      // For URL generation, we only add non-array parameters
+      if (!Array.isArray(value)) {
         url.searchParams.set(key, String(value));
       }
     });
@@ -40,17 +39,65 @@ export class SubsonicClient {
     return url;
   }
 
-  private buildUrl(method: string, params: Record<string, string> = {}) {
-    return this.getAuthorizedUrl(method, params).toString();
+  /**
+   * Intelligently selects GET or POST based on action and payload.
+   * Jukebox 'set' and 'add' actions often have many IDs and require POST.
+   */
+  async fetch(method: string, params: Record<string, any> = {}) {
+    const isMutation = method === 'jukeboxControl' && (params.action === 'set' || params.action === 'add');
+
+    if (isMutation) {
+      return this.fetchPost(method, params);
+    }
+    return this.fetchGet(method, params);
   }
 
-  async fetch(method: string, params: Record<string, string> = {}) {
-    const response = await fetch(this.buildUrl(method, params));
+  private async fetchGet(method: string, params: Record<string, any>) {
+    const url = this.getAuthorizedUrl(method, params);
+    
+    // Add array parameters to query string
+    Object.entries(params).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach(v => url.searchParams.append(key, String(v)));
+      }
+    });
+
+    const response = await fetch(url.toString());
+    return this.handleResponse(response);
+  }
+
+  private async fetchPost(method: string, params: Record<string, any>) {
+    // Auth params go in URL for widest compatibility
+    const url = this.getAuthorizedUrl(method);
+    
+    // Mutation data goes in Body
+    const body = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach(v => body.append(key, String(v)));
+      } else {
+        body.set(key, String(value));
+      }
+    });
+
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body.toString()
+    });
+
+    return this.handleResponse(response);
+  }
+
+  private async handleResponse(response: Response) {
     const data = await response.json();
-    if (data['subsonic-response'].status === 'failed') {
-      throw new Error(data['subsonic-response'].error.message);
+    const subRes = data['subsonic-response'];
+    if (subRes.status === 'failed') {
+      throw new Error(subRes.error.message || `Subsonic Error ${subRes.error.code}`);
     }
-    return data['subsonic-response'];
+    return subRes;
   }
 
   // Auth checking
@@ -77,7 +124,7 @@ export class SubsonicClient {
 
   // Jukebox support
   async jukeboxControl(action: string, params: Record<string, string | string[]> = {}) {
-    return this.fetch('jukeboxControl', { action, ...params } as Record<string, string>);
+    return this.fetch('jukeboxControl', { action, ...params });
   }
 
   async getPlayQueue() {
@@ -92,8 +139,6 @@ export class SubsonicClient {
 
   // Songs searching/filtering
   async getSongs(_artistId?: string, _albumId?: string) {
-    // In subsonic searching for all songs usually means searching with a broad query or browsing artists/albums.
-    // However, some versions support getRandomSongs.
     return this.fetch('getRandomSongs', { size: '100' });
   }
 
