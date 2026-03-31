@@ -90,7 +90,7 @@ export class QueuePanel extends BaseElement {
     // If transitioning to open, fetch queue
     if (changedProperties.has('isOpen') && this.isOpen) {
       this.refreshQueue();
-    // If transitioning to close, clear search
+      // If transitioning to close, clear search
     } else if (changedProperties.has('isOpen') && !this.isOpen) {
       this.searchQuery = '';
     }
@@ -110,6 +110,14 @@ export class QueuePanel extends BaseElement {
 
   private handleClearSearch() {
     this.searchQuery = '';
+  }
+
+  private cleanMetadata(str?: string): string {
+    if (!str) return 'Unknown';
+    if (str.includes('/') || str.includes('\\')) {
+      return str.split(/[/\\]/).pop() || str;
+    }
+    return str;
   }
 
   private handleJumpTo(index: number, e: Event) {
@@ -181,17 +189,17 @@ export class QueuePanel extends BaseElement {
 
   private async handleClearQueue() {
     if (confirm('Are you sure you want to clear the entire play queue?')) {
-        // Optimistic UI update
-        this.queueState = { ...this.queueState, items: [], currentIndex: -1 };
-        this.requestUpdate();
-        
-        try {
-            await QueueService.clearQueue();
-            window.dispatchEvent(new CustomEvent('websonic-queue-changed'));
-        } catch (err) {
-            console.error('Failed to clear queue on server', err);
-            this.refreshQueue();
-        }
+      // Optimistic UI update
+      this.queueState = { ...this.queueState, items: [], currentIndex: -1 };
+      this.requestUpdate();
+
+      try {
+        await QueueService.clearQueue();
+        window.dispatchEvent(new CustomEvent('websonic-queue-changed'));
+      } catch (err) {
+        console.error('Failed to clear queue on server', err);
+        this.refreshQueue();
+      }
     }
   }
 
@@ -204,7 +212,7 @@ export class QueuePanel extends BaseElement {
     const nonRemovedItems = this.queueState.items
       .map((item, index) => ({ item, index }))
       .filter(({ item, index }) => !this.removedKeys.has(`${index}-${item.id}`));
-      
+
     const hasItems = nonRemovedItems.length > 0;
 
     // 2. Apply search text query
@@ -306,9 +314,13 @@ export class QueuePanel extends BaseElement {
                                 </button>
                              </div>
                              
-                             <div class="flex flex-col flex-1 min-w-0">
-                                <span class="text-sm font-bold text-[#4a3b2a] truncate group-hover:text-black transition-colors">${item.title}</span>
-                                <span class="text-xs text-[#4a3b2a]/60 italic truncate">${item.artist}</span>
+                             <div class="flex flex-col flex-1 min-w-0 py-0.5">
+                                <span class="text-[13px] font-bold text-[#4a3b2a] truncate group-hover:text-black leading-tight">${item.title}</span>
+                                <div class="flex items-center gap-1.5 mt-0.5 opacity-80">
+                                   <span class="text-[10px] font-black text-[#a17c2f] uppercase tracking-widest truncate">${this.cleanMetadata(item.artist)}</span>
+                                   <span class="text-[10px] text-[#4a3b2a]/20">/</span>
+                                   <span class="text-[10px] text-[#4a3b2a]/60 italic truncate">${this.cleanMetadata(item.album)}</span>
+                                </div>
                              </div>
 
                              <button @click=${(e: Event) => this.handleRemoveSong(index, item.id, e)} 
