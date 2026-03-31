@@ -90,7 +90,7 @@ export class LibraryPanel extends BaseElement {
         this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
     }
 
-    updated(changedProperties: Map<string, any>) {
+    willUpdate(changedProperties: Map<string, any>) {
         if (changedProperties.has('isOpen') && this.isOpen) {
             this.fetchData();
         }

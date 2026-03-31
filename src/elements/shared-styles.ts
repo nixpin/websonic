@@ -8,8 +8,8 @@ import mainBase from '../style/main.css?inline';
  * directly into the Shadow DOM boundary of all components.
  */
 export const sharedStyles = [
-  unsafeCSS(tailwindBase),
-  unsafeCSS(mainBase),
+  unsafeCSS(tailwindBase.replace(/@import[^;]+;/g, '')),
+  unsafeCSS(mainBase.replace(/@import[^;]+;/g, '')),
   css`
     :host {
       display: block;

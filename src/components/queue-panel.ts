@@ -86,11 +86,12 @@ export class QueuePanel extends BaseElement {
     super.disconnectedCallback();
   }
 
-  updated(changedProperties: Map<string, any>) {
+  willUpdate(changedProperties: Map<string, any>) {
+    // If transitioning to open, fetch queue
     if (changedProperties.has('isOpen') && this.isOpen) {
       this.refreshQueue();
+    // If transitioning to close, clear search
     } else if (changedProperties.has('isOpen') && !this.isOpen) {
-      // Clear search when panel closes
       this.searchQuery = '';
     }
   }
