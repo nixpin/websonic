@@ -120,6 +120,13 @@ export class QueuePanel extends BaseElement {
     return str;
   }
 
+  private formatDuration(seconds?: number) {
+    if (!seconds) return '--:--';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
   private handleJumpTo(index: number, e: Event) {
     e.stopPropagation();
     if (index >= this.queueState.items.length) return;
@@ -323,10 +330,13 @@ export class QueuePanel extends BaseElement {
                                 </div>
                              </div>
 
-                             <button @click=${(e: Event) => this.handleRemoveSong(index, item.id, e)} 
-                                     class="opacity-0 group-hover:opacity-100 flex w-8 h-8 sm:w-6 sm:h-6 items-center justify-center text-[#4a3b2a]/40 hover:text-red-800 transition-colors shrink-0 cursor-pointer" title="Remove track">
-                                 ${ICONS.REMOVE}
-                             </button>
+                             <div class="flex items-center gap-2 shrink-0">
+                                <span class="text-[10px] font-bold text-[#4a3b2a]/60 pr-1">${this.formatDuration(item.duration)}</span>
+                                <button @click=${(e: Event) => this.handleRemoveSong(index, item.id, e)} 
+                                        class="opacity-0 group-hover:opacity-100 flex w-8 h-8 sm:w-6 sm:h-6 items-center justify-center text-[#4a3b2a]/40 hover:text-red-800 transition-colors cursor-pointer" title="Remove track">
+                                    ${ICONS.REMOVE}
+                                </button>
+                             </div>
                           </div>
                         `;
     })}
