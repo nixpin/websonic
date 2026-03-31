@@ -706,6 +706,8 @@ export class LibraryPanel extends BaseElement {
                 <div class="mb-4 px-1">
                     <div class="relative">
                         <input type="text"
+                               id="global-search-input"
+                               name="search"
                                .value=${this.globalSearchQuery}
                                @input=${(e: Event) => { this.globalSearchQuery = (e.target as HTMLInputElement).value; if (!this.globalSearchQuery.trim()) this.searchResult = { artists: [], albums: [], songs: [] }; }}
                                @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') this.handleGlobalSearch(this.globalSearchQuery); }}

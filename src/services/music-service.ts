@@ -283,26 +283,31 @@ export class MusicService {
 
     const searchResult = data.searchResult3 || {};
     
+    // Ensure nested objects aren't null/undefined before mapping
+    const artists = searchResult.artist || [];
+    const albums = searchResult.album || [];
+    const songs = searchResult.song || [];
+    
     return {
-      artists: searchResult.artist || [],
-      albums: (searchResult.album || []).map((a: any) => ({
+      artists: Array.isArray(artists) ? artists : [artists],
+      albums: (Array.isArray(albums) ? albums : [albums]).map((a: any) => ({
         id: a.id,
-        name: a.title || a.name,
-        artist: a.artist,
+        name: a.title || a.name || 'Unknown Album',
+        artist: a.artist || 'Unknown Artist',
         artistId: a.artistId,
         year: a.year,
         genre: a.genre,
         coverArt: a.coverArt,
         songCount: a.songCount
       })),
-      songs: (searchResult.song || []).map((s: any) => ({
+      songs: (Array.isArray(songs) ? songs : [songs]).map((s: any) => ({
         id: s.id,
-        title: s.title,
-        artist: s.artist,
+        title: s.title || 'Unknown Track',
+        artist: s.artist || 'Unknown Artist',
         artistId: s.artistId,
-        album: s.album,
+        album: s.album || 'Unknown Album',
         albumId: s.albumId,
-        duration: s.duration,
+        duration: s.duration || 0,
         coverArt: s.coverArt,
         bitRate: s.bitRate,
         suffix: s.suffix

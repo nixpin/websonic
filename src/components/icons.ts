@@ -5,7 +5,9 @@ import { html } from 'lit';
  * The SVG symbols in /public/icons.svg handle their own fill/stroke logic.
  */
 const renderIcon = (id: string, className = 'w-4 h-4') => {
-    const assetPath = `/icons.svg?v=8#${id}`;
+    // Vite BASE_URL handles subpaths during production builds
+    const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+    const assetPath = `${base}/icons.svg?v=9#${id}`;
     return html`
         <svg class="${className}" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
             <use href="${assetPath}" xlink:href="${assetPath}"></use>
