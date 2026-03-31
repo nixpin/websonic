@@ -4,6 +4,7 @@ import { BaseElement } from '../elements/base-element';
 import { MusicService } from '../services/music-service';
 import type { Artist, Genre, Playlist, Album, Song } from '../services/music-service';
 import { PlaybackService } from '../services/playback-service';
+import { ICONS } from './icons';
 import './websonic-pagination';
 
 type LibraryTab = 'artists' | 'genres' | 'playlists';
@@ -371,7 +372,7 @@ export class LibraryPanel extends BaseElement {
             <div class="w-full flex items-center justify-between mb-2">
                 <h2 class="text-xl font-black text-[#4a3b2a] opacity-70 uppercase tracking-[0.3em] truncate">Music Library</h2>
                 <button @click=${this.handleClose} class="text-[#4a3b2a] opacity-40 hover:opacity-100 transition-opacity p-2 -mr-3 cursor-pointer z-50">
-                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                   ${ICONS.CLOSE_BOLD}
                 </button>
             </div>
             <div class="w-full h-px bg-[#4a3b2a] opacity-10 mb-4"></div>
@@ -414,7 +415,7 @@ export class LibraryPanel extends BaseElement {
                           .value="${this.playlistSearchQuery}"
                           @input=${(e: any) => this.playlistSearchQuery = e.target.value}
                           class="w-full bg-[#4a3b2a]/5 border border-[#4a3b2a]/10 rounded-sm px-3 py-2 text-[10px] font-black tracking-widest uppercase placeholder:text-[#4a3b2a]/30 text-[#4a3b2a] focus:outline-none focus:border-[#4a3b2a]/30 transition-colors">
-                   <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-[#4a3b2a]/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                   <div class="absolute right-3 top-1/2 -translate-y-1/2">${ICONS.SEARCH}</div>
                 </div>
 
                 <div class="flex flex-col gap-1 max-h-[300px] overflow-y-auto mb-4 custom-scrollbar pr-1 min-h-[100px]">
@@ -434,7 +435,7 @@ export class LibraryPanel extends BaseElement {
                                 <span class="text-xs font-bold text-[#4a3b2a] truncate pr-4 group-hover:text-black">${p.name}</span>
                                 <span class="text-[7px] font-black text-[#4a3b2a] opacity-30 uppercase tracking-tighter">${p.songCount || 0} tracks</span>
                             </div>
-                            <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all text-[#a17c2f]"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg></div>
+                            <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all text-[#a17c2f]">${ICONS.PLUS}</div>
                         </div>
                     `)}
                 </div>
@@ -453,11 +454,11 @@ export class LibraryPanel extends BaseElement {
           <div class="relative p-6 h-full flex flex-col items-center overflow-y-auto custom-scrollbar">
               <div class="w-full flex justify-between items-center mb-6">
                   <button @click=${this.goBackToList} class="flex items-center gap-2 text-[#4a3b2a] opacity-70 hover:opacity-100 transition-opacity">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                      ${ICONS.BACK}
                       <span class="text-[10px] uppercase font-black tracking-widest">Back</span>
                   </button>
                   <button @click=${this.handleClose} class="text-[#4a3b2a] opacity-40 hover:opacity-100 transition-opacity p-2 -mr-3 cursor-pointer z-50">
-                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                     ${ICONS.CLOSE_BOLD}
                   </button>
               </div>
               ${this.loading ? html`
@@ -467,8 +468,8 @@ export class LibraryPanel extends BaseElement {
                   </div>
               ` : html`
                   <div class="w-full bg-[#4a3b2a]/5 rounded-sm p-4 mb-8 border border-[#4a3b2a]/10 flex flex-col items-center text-center">
-                      <div class="w-24 h-24 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center mb-3 shadow-inner">
-                         <svg class="w-12 h-12 text-[#4a3b2a]/20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                      <div class="w-24 h-24 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center mb-3 shadow-inner text-[#4a3b2a]/20">
+                          ${ICONS.ARTIST}
                       </div>
                       <h3 class="text-xl font-black text-[#4a3b2a] uppercase tracking-wide leading-tight">${this.selectedArtist?.name}</h3>
                       <p class="text-[10px] text-[#4a3b2a]/50 italic font-medium uppercase tracking-tighter mt-1">${this.selectedArtist?.albumCount || 0} Albums in playlist</p>
@@ -491,7 +492,7 @@ export class LibraryPanel extends BaseElement {
                         if (parent) parent.querySelector('.placeholder')?.classList.remove('hidden');
                     }} class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
                                           ` : ''}
-                                          <div class="placeholder ${album.coverArt ? 'hidden' : ''} w-full h-full flex items-center justify-center opacity-30"><svg class="w-6 h-6 text-[#4a3b2a]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg></div>
+                                          <div class="placeholder ${album.coverArt ? 'hidden' : ''} w-full h-full flex items-center justify-center opacity-30">${ICONS.ALBUM_PLACEHOLDER}</div>
                                       </div>
                                       <div class="flex flex-col flex-1">
                                           <span class="text-sm font-bold text-[#4a3b2a]">${album.name}</span>
@@ -504,15 +505,12 @@ export class LibraryPanel extends BaseElement {
                                       <div class="flex items-center gap-2">
                                           <button @click=${(e: Event) => { e.stopPropagation(); this.handleAlbumToPlaylistPrompt(album.id); }}
                                                   class="p-1.5 rounded-full hover:bg-[#a17c2f]/20 text-[#4a3b2a]/40 hover:text-[#a17c2f] transition-all" title="Add entire album to playlist">
-                                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
-                                                  <path d="M12 4v16m8-8H4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-                                              </svg>
+                                              ${ICONS.ADD_ALBUM_TO_PLAYLIST}
                                           </button>
                                           <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueueAlbum(album.id); }} class="p-1.5 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(album.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-30'} hover:opacity-100 transition-all group/add" title="Add entire album to queue">
-                                              ${this.pendingIds.has(album.id) ? html`<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>` : html`<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`}
+                                              ${this.pendingIds.has(album.id) ? ICONS.CHECK : ICONS.ADD_ALBUM_TO_QUEUE}
                                           </button>
-                                          <div class="pr-2 opacity-20 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-[#a17c2f]' : ''}"><svg class="w-4 h-4 text-[#4a3b2a] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg></div>
+                                          <div class="pr-2 opacity-20 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-[#a17c2f]' : ''}">${ICONS.CHEVRON_DOWN}</div>
                                       </div>
                                   </div>
                                   <div class="song-list ${isExpanded ? 'expanded' : ''} bg-[#4a3b2a]/5">
@@ -531,9 +529,9 @@ export class LibraryPanel extends BaseElement {
                                                   <span class="text-[9px] font-bold text-[#4a3b2a]/60">${this.formatDuration(song.duration)}</span>
                                                   <div class="flex items-center gap-1">
                                                       <button @click=${(e: Event) => { e.stopPropagation(); this.handleAddToPlaylistPrompt(song.id); }} class="p-1 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] opacity-0 group-hover/song:opacity-50 hover:!opacity-100 transition-all" title="Add to playlist">
-                                                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path><circle cx="18" cy="18" r="5" fill="#e8d5b1" stroke="currentColor" stroke-width="1.5"></circle><path d="M18 16v4M16 18h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
+                                                          ${ICONS.ADD_SONG_TO_PLAYLIST}
                                                       </button>
-                                                      <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueueSong(song); }} class="p-1 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(song.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-0 group-hover/song:opacity-50 hover:!opacity-100'} transition-all" title="Add to queue">${this.pendingIds.has(song.id) ? html`<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>` : html`<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>`}</button>
+                                                      <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueueSong(song); }} class="p-1 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(song.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-0 group-hover/song:opacity-50 hover:!opacity-100'} transition-all" title="Add to queue">${this.pendingIds.has(song.id) ? ICONS.CHECK : ICONS.ADD_SONG_TO_QUEUE}</button>
                                                   </div>
                                               </div>
                                           </div>
@@ -554,7 +552,7 @@ export class LibraryPanel extends BaseElement {
         if (this.activeTab === 'artists') {
             return this.artists.map(a => html`
           <div @click=${() => this.handleArtistClick(a.id)} class="flex items-center gap-3 p-2 border-b border-[#4a3b2a]/5 hover:bg-[#4a3b2a]/5 transition-colors cursor-pointer group">
-              <div class="w-10 h-10 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity"><svg class="w-5 h-5 text-[#4a3b2a]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+              <div class="w-10 h-10 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity">${ICONS.ARTIST}</div>
               <div class="flex flex-col"><span class="text-sm font-bold text-[#4a3b2a]">${a.name}</span><span class="text-[10px] text-[#4a3b2a]/50 italic">${a.albumCount || 0} Albums</span></div>
           </div>
         `);
@@ -569,7 +567,7 @@ export class LibraryPanel extends BaseElement {
           <div class="flex justify-between items-center mb-4 px-1">
               <span class="text-[10px] font-black text-[#4a3b2a]/40 uppercase tracking-widest">Your Playlists</span>
               <button @click=${this.handleCreatePlaylist} class="p-1.5 rounded-full bg-[#4a3b2a]/5 hover:bg-[#4a3b2a]/10 text-[#4a3b2a]/60 hover:text-[#4a3b2a] transition-all group">
-                  <svg class="w-4 h-4 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                  <div class="transition-transform group-hover:rotate-90">${ICONS.PLUS}</div>
               </button>
           </div>
           ${this.playlists.map(p => {
@@ -578,13 +576,13 @@ export class LibraryPanel extends BaseElement {
                 return html`
               <div class="flex flex-col bg-white/5 border border-transparent hover:border-[#4a3b2a]/20 transition-all rounded-sm mb-1">
                   <div @click=${() => this.togglePlaylist(p)} class="flex items-center gap-3 p-2 cursor-pointer group">
-                      <div class="w-10 h-10 bg-[#4a3b2a]/10 rounded flex items-center justify-center opacity-30 group-hover:opacity-60 transition-opacity"><svg class="w-5 h-5 text-[#4a3b2a]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 9H2v2h17V9zm0-4H2v2h17V5zM2 15h13v-2H2v2zm15-2v6l5-3-5-3z"/></svg></div>
+                      <div class="w-10 h-10 bg-[#4a3b2a]/10 rounded flex items-center justify-center opacity-30 group-hover:opacity-60 transition-opacity">${ICONS.PLAYLIST}</div>
                       <div class="flex flex-col flex-1"><span class="text-sm font-bold text-[#4a3b2a]">${p.name}</span><span class="text-[10px] text-[#4a3b2a]/50 italic uppercase font-black tracking-tighter">${p.songCount || 0} Tracks</span></div>
                       <div class="flex items-center gap-1">
-                          <button @click=${(e: Event) => { e.stopPropagation(); this.handleRenamePlaylist(p); }} class="p-1.5 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] opacity-0 group-hover:opacity-40 hover:!opacity-100 transition-all" title="Rename Playlist"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-                          <button @click=${(e: Event) => { e.stopPropagation(); this.handleDeletePlaylist(p.id); }} class="p-1.5 rounded-full hover:bg-red-500/10 text-red-900/40 hover:text-red-900 opacity-0 group-hover:opacity-100 transition-all" title="Delete Playlist"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                          <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueuePlaylist(p.id); }} class="p-1.5 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(p.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-30'} hover:opacity-100 transition-all group/add" title="Add entire playlist to queue">${this.pendingIds.has(p.id) ? html`<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>` : html`<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`}</button>
-                          <div class="pr-2 opacity-20 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-[#a17c2f]' : ''}"><svg class="w-4 h-4 text-[#4a3b2a] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg></div>
+                          <button @click=${(e: Event) => { e.stopPropagation(); this.handleRenamePlaylist(p); }} class="p-1.5 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] opacity-0 group-hover:opacity-40 hover:!opacity-100 transition-all" title="Rename Playlist">${ICONS.EDIT}</button>
+                          <button @click=${(e: Event) => { e.stopPropagation(); this.handleDeletePlaylist(p.id); }} class="p-1.5 rounded-full hover:bg-red-500/10 text-red-900/40 hover:text-red-900 opacity-0 group-hover:opacity-100 transition-all" title="Delete Playlist">${ICONS.DELETE}</button>
+                          <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueuePlaylist(p.id); }} class="p-1.5 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(p.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-30'} hover:opacity-100 transition-all group/add" title="Add entire playlist to queue">${this.pendingIds.has(p.id) ? ICONS.CHECK : ICONS.ADD_ALBUM_TO_QUEUE}</button>
+                          <div class="pr-2 opacity-20 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-[#a17c2f]' : ''}">${ICONS.CHEVRON_DOWN}</div>
                       </div>
                   </div>
                   <div class="song-list ${isExpanded ? 'expanded' : ''} bg-[#4a3b2a]/5">
@@ -604,8 +602,8 @@ export class LibraryPanel extends BaseElement {
                               <div class="flex items-center gap-3">
                                   <span class="text-[9px] font-bold text-[#4a3b2a]/60">${this.formatDuration(song.duration)}</span>
                                   <div class="flex items-center gap-1">
-                                      <button @click=${(e: Event) => { e.stopPropagation(); this.handleRemoveFromPlaylist(p.id, index); }} class="p-1 rounded-full hover:bg-red-500/10 text-red-900/40 hover:text-red-900 opacity-0 group-hover/song:opacity-100 transition-all" title="Remove from playlist"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-                                      <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueueSong(song); }} class="p-1 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(song.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-0 group-hover/song:opacity-50 hover:!opacity-100'} transition-all" title="Add to queue">${this.pendingIds.has(song.id) ? html`<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>` : html`<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>`}</button>
+                                      <button @click=${(e: Event) => { e.stopPropagation(); this.handleRemoveFromPlaylist(p.id, index); }} class="p-1 rounded-full hover:bg-red-500/10 text-red-900/40 hover:text-red-900 opacity-0 group-hover/song:opacity-100 transition-all" title="Remove from playlist">${ICONS.REMOVE}</button>
+                                      <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueueSong(song); }} class="p-1 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(song.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-0 group-hover/song:opacity-50 hover:!opacity-100'} transition-all" title="Add to queue">${this.pendingIds.has(song.id) ? ICONS.CHECK : ICONS.ADD_SONG_TO_QUEUE}</button>
                                   </div>
                               </div>
                           </div>

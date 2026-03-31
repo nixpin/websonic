@@ -4,6 +4,7 @@ import { BaseElement } from '../elements/base-element';
 import { type QueueState, QueueService } from '../services/queue-service';
 import { PlayerService } from '../services/player-service';
 import { PlaybackService } from '../services/playback-service';
+import { ICONS } from './icons';
 
 @customElement('queue-panel')
 export class QueuePanel extends BaseElement {
@@ -189,7 +190,7 @@ export class QueuePanel extends BaseElement {
                     <button @click=${this.handleClose} 
                             class="text-[#4a3b2a] opacity-40 hover:opacity-100 transition-opacity p-2 -ml-3 mr-2 cursor-pointer" 
                             title="Close Queue">
-                       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                       ${ICONS.CLOSE_BOLD}
                     </button>
                     <h2 class="text-xl font-black text-[#4a3b2a] opacity-70 uppercase tracking-[0.3em] truncate">Play Queue</h2>
                 </div>
@@ -200,7 +201,7 @@ export class QueuePanel extends BaseElement {
                             class="text-[10px] font-black uppercase tracking-widest text-red-900/40 hover:text-red-800 transition-colors flex items-center gap-1 cursor-pointer" 
                             title="Clear All Tracks">
                        <span>Clear</span>
-                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                       ${ICONS.DELETE}
                     </button>
                 ` : ''}
               </div>
@@ -234,8 +235,8 @@ export class QueuePanel extends BaseElement {
                                @drop=${(e: DragEvent) => this.handleDrop(e, index)}>
                              
                              <!-- Drag Handle -->
-                             <div class="flex items-center w-4 text-[#4a3b2a]/10 group-hover:text-[#a17c2f]/40 transition-colors cursor-grab">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                             <div class="flex items-center w-4 text-[#4a3b2a] opacity-50 group-hover:opacity-100 group-hover:text-[#a17c2f] transition-all cursor-grab">
+                                ${ICONS.DRAG_HANDLE}
                              </div>
 
                              <!-- Play/Index Button -->
@@ -245,7 +246,7 @@ export class QueuePanel extends BaseElement {
                                 <button @click=${(e: Event) => this.handleJumpTo(index, e)} 
                                         class="hidden group-hover:flex w-5 h-5 items-center justify-center text-[#a17c2f] hover:scale-110 transition-transform cursor-pointer" 
                                         title="Play track">
-                                   <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+                                   ${ICONS.PLAY}
                                 </button>
                              </div>
                              
@@ -256,7 +257,7 @@ export class QueuePanel extends BaseElement {
 
                              <button @click=${(e: Event) => this.handleRemoveSong(index, item.id, e)} 
                                      class="opacity-0 group-hover:opacity-100 flex w-6 h-6 items-center justify-center text-[#4a3b2a]/40 hover:text-red-800 transition-colors" title="Remove track">
-                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                 ${ICONS.REMOVE}
                              </button>
                           </div>
                         `;
