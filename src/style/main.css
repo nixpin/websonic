@@ -1,4 +1,4 @@
-@import "./theme.css";
+/* Global UI Styles and Component Resets */
 
 :root {
   font-family: var(--font-sans);
