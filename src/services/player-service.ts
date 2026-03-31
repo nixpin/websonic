@@ -46,7 +46,7 @@ export class PlayerService {
 
   // Not strictly needed anymore since QueueService handles the client, 
   // but kept for interface compatibility if used elsewhere.
-  static setClient() {
+  static setClient(_client?: any) {
     // No-op
   }
 
