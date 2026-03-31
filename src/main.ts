@@ -1,4 +1,4 @@
-import './style/main.css';
+import './index.css';
 import './elements/websonic-app';
 
 /**
