@@ -53,9 +53,9 @@
   --color-skeleton-content-1: rgba(250, 250, 249, 0.1);
   --color-skeleton-content-2: rgba(250, 250, 249, 0.05);
 
-  /* Scrollbar Aesthetics */
-  --color-scrollbar-thumb: #44403c;
-  --color-scrollbar-hover: #57534e;
+  /* Scrollbar Aesthetics (Further Refined: Lighter stone) */
+  --color-scrollbar-thumb: #a8a29e;
+  --color-scrollbar-hover: #d6d3d1;
 
   /* Global Layout Constants */
   --font-family-heading: "Michroma", "Arial Black", sans-serif;
@@ -69,6 +69,17 @@
   --z-index-overlay: 200;
   --z-index-modal: 300;
   --z-index-tooltip: 400;
+}
+
+/* Custom UI Overrides (Scrollbars & Typography) */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+  background: var(--color-scrollbar-thumb); 
+  border-radius: 20px; 
+}
+::-webkit-scrollbar-thumb:hover { 
+  background: var(--color-scrollbar-hover); 
 }
 
 /* Base Semantic Typography Overrides */
@@ -118,6 +129,15 @@ h1, h2, h3, h4, h5, h6 {
 
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+@utility custom-scrollbar {
+  &::-webkit-scrollbar-thumb {
+    background: rgba(168, 162, 158, 0.5);
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(168, 162, 158, 0.7);
   }
 }
 

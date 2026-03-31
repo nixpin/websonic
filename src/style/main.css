@@ -18,24 +18,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { 
-  background: var(--color-scrollbar-thumb); 
-  border-radius: 20px; 
-}
-::-webkit-scrollbar-thumb:hover { 
-  background: var(--color-scrollbar-hover); 
-}
-
-/* Light styling for internal panel scrollbars (queue, library) */
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(74, 59, 42, 0.2);
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(74, 59, 42, 0.4);
-}
+/* Custom scrollbar rules moved to theme.css for global/shadow-dom availability */
 
 body {
   margin: 0;
