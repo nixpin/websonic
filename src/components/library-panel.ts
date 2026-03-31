@@ -7,7 +7,7 @@ import { PlaybackService } from '../services/playback-service';
 import { ICONS } from './icons';
 import './websonic-pagination';
 
-type LibraryTab = 'artists' | 'genres' | 'playlists';
+type LibraryTab = 'artists' | 'genres' | 'playlists' | 'search';
 
 // @TODO: Split into smaller components
 @customElement('library-panel')
@@ -35,6 +35,8 @@ export class LibraryPanel extends BaseElement {
     @state() private loadingPlaylists = false;
     @state() private playlistSearchQuery = '';
     @state() private artistSearchQuery = '';
+    @state() private globalSearchQuery = '';
+    @state() private searchResult: { artists: Artist[], albums: Album[], songs: Song[] } = { artists: [], albums: [], songs: [] };
     private allArtistsCache: Artist[] | null = null;
 
     private readonly itemsPerPage = 20;
@@ -210,12 +212,32 @@ export class LibraryPanel extends BaseElement {
         this.expandedAlbumIds = new Set();
     }
 
+    async handleGlobalSearch(query: string) {
+        this.globalSearchQuery = query;
+        if (!query.trim()) {
+            this.searchResult = { artists: [], albums: [], songs: [] };
+            return;
+        }
+
+        this.loading = true;
+        try {
+            const musicService = MusicService.getInstance();
+            this.searchResult = await musicService.search(query, 15, 15, 15);
+        } catch (e) {
+            console.error('Failed to perform global search', e);
+        } finally {
+            this.loading = false;
+        }
+    }
+
     setTab(tab: LibraryTab) {
         this.activeTab = tab;
         this.currentPage = 1;
         this.totalPages = 1;
         this.selectedArtistId = null;
         this.artistSearchQuery = '';
+        this.globalSearchQuery = '';
+        this.searchResult = { artists: [], albums: [], songs: [] };
         this.expandedAlbumIds = new Set();
         this.expandedPlaylistIds = new Set();
         this.fetchData();
@@ -390,8 +412,8 @@ export class LibraryPanel extends BaseElement {
                 </button>
             </div>
             <div class="w-full h-px bg-[#4a3b2a] opacity-10 mb-4"></div>
-            <div class="flex gap-4 w-full border-b border-[#4a3b2a]/10 pb-1 mb-4 overflow-x-auto custom-scrollbar">
-                ${(['artists', 'genres', 'playlists'] as LibraryTab[]).map(tab => html`
+            <div class="flex gap-4 w-full border-b border-[#4a3b2a]/10 pb-1 mb-4 overflow-x-auto custom-scrollbar no-scrollbar">
+                ${(['artists', 'genres', 'playlists', 'search'] as LibraryTab[]).map(tab => html`
                     <div @click=${() => this.setTab(tab)} class="cursor-pointer py-1 px-2 text-[10px] font-black uppercase tracking-widest transition-all ${this.activeTab === tab ? 'text-[#4a3b2a] border-b-2 border-[#4a3b2a]' : 'text-[#4a3b2a]/40 hover:text-[#4a3b2a]/70'}">${tab}</div>
                 `)}
             </div>
@@ -404,7 +426,9 @@ export class LibraryPanel extends BaseElement {
                 ` : html`<div class="flex flex-col gap-1">${this.renderList()}</div>`}
             </div>
             <div class="w-full pt-4 mt-2 border-t border-[#4a3b2a]/10">
-                <websonic-pagination .currentPage=${this.currentPage} .totalPages=${this.totalPages} @page-change=${this.handlePageChange}></websonic-pagination>
+                ${this.activeTab !== 'search' ? html`
+                    <websonic-pagination .currentPage=${this.currentPage} .totalPages=${this.totalPages} @page-change=${this.handlePageChange}></websonic-pagination>
+                ` : ''}
             </div>
         </div>
       </div>`;
@@ -563,6 +587,7 @@ export class LibraryPanel extends BaseElement {
     }
 
     private renderList() {
+        const musicService = MusicService.getInstance();
         if (this.activeTab === 'artists') {
             return html`
               <div class="mb-4 px-1">
@@ -658,6 +683,90 @@ export class LibraryPanel extends BaseElement {
             `;
             })}
         `;
+        }
+        if (this.activeTab === 'search') {
+            const hasResults = this.searchResult.artists.length > 0 || this.searchResult.albums.length > 0 || this.searchResult.songs.length > 0;
+
+            return html`
+                <div class="mb-4 px-1">
+                    <div class="relative">
+                        <input type="text"
+                               .value=${this.globalSearchQuery}
+                               @input=${(e: Event) => { this.globalSearchQuery = (e.target as HTMLInputElement).value; if (!this.globalSearchQuery.trim()) this.searchResult = { artists: [], albums: [], songs: [] }; }}
+                               @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') this.handleGlobalSearch(this.globalSearchQuery); }}
+                               placeholder="Search across all music (Enter to search)..."
+                               class="w-full bg-[#4a3b2a]/5 border border-[#4a3b2a]/10 rounded px-3 py-2 pr-8 text-xs sm:text-sm text-[#4a3b2a] focus:outline-none focus:border-[#4a3b2a]/30 focus:bg-[#4a3b2a]/10 placeholder:opacity-50 font-medium transition-colors" />
+                        ${this.globalSearchQuery ? html`
+                            <button @click=${() => { this.globalSearchQuery = ''; this.handleGlobalSearch(''); }} class="absolute right-2 top-1/2 -translate-y-1/2 text-[#4a3b2a] opacity-40 hover:opacity-100 p-1 flex items-center justify-center cursor-pointer transition-opacity">
+                                <div class="scale-75 origin-center">${ICONS.CLOSE_BOLD}</div>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-6 pb-8">
+                    ${this.searchResult.artists.length > 0 ? html`
+                        <div class="flex flex-col gap-2">
+                            <h4 class="text-[9px] font-black uppercase tracking-[0.3em] text-[#4a3b2a]/40 border-b border-[#4a3b2a]/10 pb-1 mx-1">Artists</h4>
+                            ${this.searchResult.artists.map(a => html`
+                                <div @click=${() => this.handleArtistClick(a.id)} class="flex items-center gap-3 p-2 hover:bg-[#4a3b2a]/5 rounded-sm transition-colors cursor-pointer group">
+                                    <div class="w-8 h-8 bg-[#4a3b2a]/10 rounded-full flex items-center justify-center opacity-40 group-hover:opacity-100 transition-opacity">${ICONS.ARTIST}</div>
+                                    <span class="text-sm font-bold text-[#4a3b2a]">${a.name}</span>
+                                </div>
+                            `)}
+                        </div>
+                    ` : ''}
+
+                    ${this.searchResult.albums.length > 0 ? html`
+                        <div class="flex flex-col gap-2">
+                            <h4 class="text-[9px] font-black uppercase tracking-[0.3em] text-[#4a3b2a]/40 border-b border-[#4a3b2a]/10 pb-1 mx-1">Albums</h4>
+                            ${this.searchResult.albums.map(album => html`
+                                <div @click=${() => this.handleArtistClick(album.artistId)} class="flex items-center gap-3 p-2 hover:bg-[#4a3b2a]/5 rounded-sm transition-colors cursor-pointer group">
+                                    <div class="w-10 h-10 bg-[#4a3b2a]/10 rounded flex-shrink-0 overflow-hidden shadow-sm flex items-center justify-center group-hover:bg-[#4a3b2a]/20">
+                                          ${album.coverArt ? html`
+                                              <img src="${musicService.getCoverArtUrl(album.coverArt, 200)}" class="w-full h-full object-cover">
+                                          ` : html`<div class="opacity-20">${ICONS.ALBUM_PLACEHOLDER}</div>`}
+                                    </div>
+                                    <div class="flex flex-col min-w-0">
+                                        <span class="text-sm font-bold text-[#4a3b2a] truncate">${album.name}</span>
+                                        <span class="text-[10px] text-[#4a3b2a]/60 uppercase font-black tracking-tighter truncate">${album.artist}</span>
+                                    </div>
+                                </div>
+                            `)}
+                        </div>
+                    ` : ''}
+
+                    ${this.searchResult.songs.length > 0 ? html`
+                        <div class="flex flex-col gap-1">
+                            <h4 class="text-[9px] font-black uppercase tracking-[0.3em] text-[#4a3b2a]/40 border-b border-[#4a3b2a]/10 pb-1 mx-1 mb-2">Tracks</h4>
+                            ${this.searchResult.songs.map(song => html`
+                                <div class="flex items-center gap-3 py-1.5 px-2 hover:bg-[#4a3b2a]/10 rounded-sm transition-colors group/song overflow-hidden">
+                                    <div class="flex flex-col flex-1 min-w-0">
+                                        <span class="text-[13px] font-bold text-[#4a3b2a] truncate group-hover/song:text-black leading-tight">${song.title}</span>
+                                        <div class="flex items-center gap-1.5 mt-0.5 opacity-80">
+                                            <span class="text-[10px] font-black text-[#a17c2f] uppercase tracking-widest truncate">${this.cleanMetadata(song.artist)}</span>
+                                            <span class="text-[10px] text-[#4a3b2a]/20">/</span>
+                                            <span class="text-[10px] text-[#4a3b2a]/60 italic truncate">${this.cleanMetadata(song.album)}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[9px] font-bold text-[#4a3b2a]/60">${this.formatDuration(song.duration)}</span>
+                                        <button @click=${(e: Event) => { e.stopPropagation(); this.handleQueueSong(song); }} class="p-1 rounded-full hover:bg-[#4a3b2a]/20 text-[#4a3b2a] ${this.pendingIds.has(song.id) ? 'opacity-100 text-[#a17c2f]' : 'opacity-0 group-hover/song:opacity-50 hover:!opacity-100'} transition-all" title="Add to queue">
+                                            ${this.pendingIds.has(song.id) ? ICONS.CHECK : ICONS.ADD_SONG_TO_QUEUE}
+                                        </button>
+                                    </div>
+                                </div>
+                            `)}
+                        </div>
+                    ` : ''}
+
+                    ${this.globalSearchQuery && !hasResults && !this.loading ? html`
+                        <div class="text-[10px] text-[#4a3b2a]/40 italic py-12 text-center px-4 font-serif">
+                            Silence in the archives. No matches for "${this.globalSearchQuery}" found.
+                        </div>
+                    ` : ''}
+                </div>
+            `;
         }
         return html`<div class="opacity-20 text-center p-12 italic text-sm">Library is currently silent.</div>`;
     }
