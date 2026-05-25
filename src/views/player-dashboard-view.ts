@@ -303,6 +303,79 @@ export class PlayerDashboardView extends BaseElement {
       box-sizing: border-box;
       font-family: var(--font-family-heading); /* Base font for the viewport titular elements */
     }
+
+    @media (max-width: 640px) {
+      .viewport-pad {
+        padding: 0 20px;
+      }
+
+      .dashboard-main {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .dashboard-main > .flex-1 {
+        flex: none;
+        width: 100%;
+        text-align: center;
+      }
+
+      .dashboard-main h1 {
+        font-size: 16px;
+        text-align: center;
+        margin-bottom: 2px;
+      }
+
+      .dashboard-main h2 {
+        font-size: 13px;
+        text-align: center;
+        margin-bottom: 1px;
+      }
+
+      .dashboard-main .album-text {
+        font-size: 11px;
+        text-align: center;
+      }
+
+      .art-well {
+        width: 130px;
+        height: 130px;
+        padding: 6px;
+      }
+
+      .vinyl-label-center {
+        width: 38px;
+        height: 38px;
+      }
+
+      .spindle {
+        width: 9px;
+        height: 9px;
+      }
+
+      .meta-badge {
+        top: 8px;
+        right: 8px;
+        gap: 4px;
+      }
+
+      .meta-tag {
+        font-size: 7px;
+        padding: 2px 4px;
+      }
+
+      .progress-section {
+        padding-top: 10px;
+        padding-bottom: 14px;
+      }
+
+      .time-labels {
+        margin-top: 6px;
+        font-size: 10px;
+      }
+    }
   `];
 
   private _tickerInterval: any = null;
@@ -381,58 +454,70 @@ export class PlayerDashboardView extends BaseElement {
   }
 
   render() {
-    const activeStatus = this.status || this.internalStatus;
-    const track = activeStatus?.currentTrack;
+    let activeStatus: PlayerStatus | null = null;
+    let track = null;
+    try {
+      activeStatus = this.status || this.internalStatus;
+      track = activeStatus?.currentTrack;
+    } catch (e) {
+      console.error('PlayerDashboardView: state error', e);
+    }
+
     const progress = (track?.duration && activeStatus?.position) ? (activeStatus.position / track.duration) * 100 : 0;
-    const coverUrl = track?.coverArt ? PlayerService.getInstance().getCoverArtUrl(track.id) : '/theme/cover-placeholder.webp';
+    const coverArtId = track?.coverArt || track?.id;
+    const coverUrl = coverArtId ? PlayerService.getInstance().getCoverArtUrl(coverArtId) : '/theme/cover-placeholder.webp';
 
-    return html`
-      <div class="viewport-pad">
-        ${track ? html`
-          <div class="meta-badge">
-             <h4 class="meta-tag">${activeStatus?.format || 'PCM'}</h4>
-             <h4 class="meta-tag text-[9px]">${activeStatus?.bitRate ? Math.round(activeStatus.bitRate / 1000) : '—'}kbps</h4>
-          </div>
-
-          <div class="dashboard-main py-4">
-            <div class="art-well">
-              <div class="record-assembly ${activeStatus?.isPlaying ? 'is-playing' : ''}">
-                ${track.coverArt ? html`
-                  <img src="${coverUrl}" alt="Album Art">
-                ` : html`
-                  <div class="art-placeholder">
-                    <div class="placeholder-artist">${track.artist}</div>
-                    <div class="placeholder-album">${track.album}</div>
-                  </div>
-                `}
-                <div class="vinyl-grooves"></div>
-                <div class="vinyl-label-center"></div>
-              </div>
-              <div class="spindle"></div>
-            </div>
-
-            <div class="flex-1 flex flex-col justify-center text-left">
-                <h1 class="text-xl font-bold text-[var(--color-accent-from)] drop-shadow-lg mb-2 line-clamp-1">${track.title}</h1>
-                <h2 class="text-lg text-[var(--color-text-dim)] mb-1 opacity-90 tracking-wide uppercase">${track.artist}</h2>
-                <div class="text-base text-[var(--color-text-muted)] italic opacity-60">${track.album}</div>
-            </div>
-          </div>
-
-          <div class="progress-section">
-            <div class="progress-track" @click=${this.handleSeek}>
-              <div class="progress-fill" style="width: ${progress}%"></div>
-              <div class="progress-handle" style="left: ${progress}%"></div>
-            </div>
-            <div class="time-labels">
-              <span>${this.formatTime(activeStatus?.position || 0)}</span>
-              <span>${this.formatTime(track?.duration || 0)}</span>
-            </div>
-          </div>
-        ` : html`
+    if (!track) {
+      return html`
+        <div class="viewport-pad">
           <div class="flex-1 flex items-center justify-center">
             <div class="text-xl font-bold text-stone-600 tracking-widest uppercase opacity-20">No Track Playing</div>
           </div>
-        `}
+        </div>
+      `;
+    }
+
+    return html`
+      <div class="viewport-pad">
+        <div class="meta-badge">
+           <h4 class="meta-tag">${activeStatus?.format || 'PCM'}</h4>
+           <h4 class="meta-tag text-[9px]">${activeStatus?.bitRate ? Math.round(activeStatus.bitRate / 1000) : '—'}kbps</h4>
+        </div>
+
+        <div class="dashboard-main py-4">
+          <div class="art-well">
+            <div class="record-assembly ${activeStatus?.isPlaying ? 'is-playing' : ''}">
+              ${coverArtId ? html`
+                <img src="${coverUrl}" alt="Album Art">
+              ` : html`
+                <div class="art-placeholder">
+                  <div class="placeholder-artist">${track.artist}</div>
+                  <div class="placeholder-album">${track.album}</div>
+                </div>
+              `}
+              <div class="vinyl-grooves"></div>
+              <div class="vinyl-label-center"></div>
+            </div>
+            <div class="spindle"></div>
+          </div>
+
+          <div class="flex-1 flex flex-col justify-center text-left">
+              <h1 class="text-xl font-bold text-[var(--color-accent-from)] drop-shadow-lg mb-2 line-clamp-1">${track.title}</h1>
+              <h2 class="text-lg text-[var(--color-text-dim)] mb-1 opacity-90 tracking-wide uppercase">${track.artist}</h2>
+              <div class="album-text text-base text-[var(--color-text-muted)] italic opacity-60">${track.album}</div>
+          </div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-track" @click=${this.handleSeek}>
+            <div class="progress-fill" style="width: ${progress}%"></div>
+            <div class="progress-handle" style="left: ${progress}%"></div>
+          </div>
+          <div class="time-labels">
+            <span>${this.formatTime(activeStatus?.position || 0)}</span>
+            <span>${this.formatTime(track?.duration || 0)}</span>
+          </div>
+        </div>
       </div>
     `;
   }

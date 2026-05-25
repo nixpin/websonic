@@ -99,7 +99,25 @@ export class WebSonicShell extends BaseElement {
 
     @media (max-width: 1024px) {
       .desk-left, .desk-right {
-        width: 30%; /* Responsive scaling for smaller screens */
+        width: 30%;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :host {
+        background: #000;
+      }
+
+      .desk,
+      .desk-repeat,
+      .desk-left,
+      .desk-right,
+      .desk-content {
+        display: none;
+      }
+
+      main {
+        justify-content: center;
       }
     }
   `];

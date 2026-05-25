@@ -1,26 +1,72 @@
-import { html } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
-import { provide } from '@lit/context';
-import { createRouter } from '../router';
-import { BaseElement } from './base-element';
-import { subsonicContext } from '../context/subsonic-context';
-import { SubsonicClient } from '../sdk/subsonic';
-import { AuthService } from '../services/auth-service';
-import { QueueService } from '../services/queue-service';
-import { PlayerService } from '../services/player-service';
+import { html, css } from "lit";
+import { customElement, state } from "lit/decorators.js";
+import { provide } from "@lit/context";
+import { createRouter } from "../router";
+import { BaseElement } from "./base-element";
+import { subsonicContext } from "../context/subsonic-context";
+import { SubsonicClient } from "../sdk/subsonic";
+import { AuthService } from "../services/auth-service";
+import { QueueService } from "../services/queue-service";
+import { PlayerService } from "../services/player-service";
 
 // Registration of layout and view components
-import '../components/websonic-shell';
-import '../components/websonic-player-display';
-import '../components/websonic-amp-hardware';
-import '../components/websonic-auth-overlay';
-import '../components/library-panel';
-import '../components/queue-panel';
-import '../views/auth-view.ts';
-import '../views/dashboard-view.ts';
+import "../components/websonic-shell";
+import "../components/websonic-player-display";
+import "../components/websonic-amp-hardware";
+import "../components/websonic-auth-overlay";
+import "../components/library-panel";
+import "../components/queue-panel";
+import "../views/auth-view.ts";
+import "../views/dashboard-view.ts";
 
-@customElement('websonic-app')
+@customElement("websonic-app")
 export class WebSonicApp extends BaseElement {
+  static styles = [
+    ...BaseElement.styles,
+    css`
+      @media (max-width: 640px) {
+        .amp-wrapper {
+          display: none !important;
+        }
+
+        .player-wrapper {
+          position: static !important;
+          transform: none !important;
+          translate: none !important;
+          flex: none;
+          width: 100%;
+          height: 70vh;
+          align-self: start;
+          pointer-events: auto !important;
+        }
+
+        .player-wrapper-inner {
+          width: 100%;
+          height: 100%;
+        }
+
+        .content-area {
+          max-width: none !important;
+          flex: 1;
+          align-items: stretch;
+        }
+
+        .shell-main {
+          justify-content: flex-start;
+        }
+
+        .side-panels {
+          position: fixed !important;
+          inset: 0 !important;
+        }
+
+        .side-panels library-panel,
+        .side-panels queue-panel {
+          width: 100% !important;
+        }
+      }
+    `,
+  ];
   // Global Subsonic Client Context
   @provide({ context: subsonicContext })
   @state()
@@ -41,7 +87,7 @@ export class WebSonicApp extends BaseElement {
     this.isAuthenticated = AuthService.isAuthenticated();
 
     // Listen for auth changes from anywhere in the app
-    window.addEventListener('websonic-auth-changed', () => {
+    window.addEventListener("websonic-auth-changed", () => {
       this.isAuthenticated = AuthService.isAuthenticated();
       if (this.isAuthenticated) {
         const config = AuthService.getActiveConfig();
@@ -54,7 +100,7 @@ export class WebSonicApp extends BaseElement {
     });
 
     // Listen for player state changes
-    window.addEventListener('websonic-player-state-changed', (e: any) => {
+    window.addEventListener("websonic-player-state-changed", (e: any) => {
       this.isPlaying = e.detail.isPlaying;
     });
 
@@ -76,7 +122,7 @@ export class WebSonicApp extends BaseElement {
 
   private handleLogout() {
     const config = AuthService.getActiveConfig();
-    const serverName = config?.baseUrl || 'the server';
+    const serverName = config?.baseUrl || "the server";
 
     if (confirm(`Are you sure you want to disconnect from ${serverName}?`)) {
       AuthService.logout();
@@ -98,12 +144,16 @@ export class WebSonicApp extends BaseElement {
   render() {
     return html`
       <websonic-shell>
-        <div slot="main" class="relative w-full h-full flex flex-col items-center justify-end overflow-hidden">
-          
+        <div
+          slot="main"
+          class="shell-main relative w-full h-full flex flex-col items-center justify-end overflow-hidden"
+        >
           <!-- Bottom Layer: The Physical Jukebox Interface -->
-          <div class="relative w-full max-w-6xl flex justify-center items-end">
-            <websonic-amp-hardware 
-              class="relative w-full"
+          <div
+            class="content-area relative w-full max-w-6xl flex justify-center items-end"
+          >
+            <websonic-amp-hardware
+              class="amp-wrapper relative w-full"
               .isAuthenticated=${this.isAuthenticated}
               .isQueueOpen=${this.isQueueOpen}
               .isLibraryOpen=${this.isLibraryOpen}
@@ -114,30 +164,53 @@ export class WebSonicApp extends BaseElement {
             ></websonic-amp-hardware>
 
             <!-- Primary Player Screen (Hardware frame + Dashboard View) -->
-            <div class="absolute inset-0 flex items-center justify-center -translate-y-[29%] pointer-events-none">
-              <div class="pointer-events-auto">
-                <websonic-player-display>
-                   <dashboard-view></dashboard-view>
+            <div
+              class="player-wrapper absolute inset-0 flex items-center justify-center -translate-y-[29%] pointer-events-none"
+            >
+              <div
+                class="player-wrapper-inner pointer-events-auto"
+              >
+                <websonic-player-display
+                  .isAuthenticated=${this.isAuthenticated}
+                  @toggle-library=${this.toggleLibrary}
+                  @toggle-queue=${this.toggleQueue}
+                  @logout=${this.handleLogout}
+                >
+                  <dashboard-view></dashboard-view>
                 </websonic-player-display>
               </div>
             </div>
           </div>
 
           <!-- Top Layer: The Authorization Overlay (Triggered if not authenticated) -->
-          <websonic-auth-overlay ?show=${!this.isAuthenticated}></websonic-auth-overlay>
+          <websonic-auth-overlay
+            ?show=${!this.isAuthenticated}
+          ></websonic-auth-overlay>
 
           <!-- Side Panels: Library & Queue -->
-          <div class="absolute inset-0 pointer-events-none flex z-[200]">
-             <library-panel style="width: 70%;" 
-                .isOpen=${this.isLibraryOpen} 
-                @close=${() => this.isLibraryOpen = false}
-             ></library-panel>
-             <queue-panel style="width: 30%;" .isOpen=${this.isQueueOpen} @close=${() => this.isQueueOpen = false}></queue-panel>
+          <div
+            class="side-panels absolute inset-0 pointer-events-none flex z-[200]"
+          >
+            <library-panel
+              style="width: 70%;"
+              .isOpen=${this.isLibraryOpen}
+              @close=${() => (this.isLibraryOpen = false)}
+            ></library-panel>
+            <queue-panel
+              style="width: 30%;"
+              .isOpen=${this.isQueueOpen}
+              @close=${() => (this.isQueueOpen = false)}
+            ></queue-panel>
           </div>
         </div>
 
-        <div slot="player" class="flex items-center justify-center w-full px-12">
-           <p class="text-stone-400 font-mono text-sm tracking-widest uppercase opacity-50"></p>
+        <div
+          slot="player"
+          class="flex items-center justify-center w-full px-12"
+        >
+          <p
+            class="text-stone-400 font-mono text-sm tracking-widest uppercase opacity-50"
+          ></p>
         </div>
       </websonic-shell>
     `;
