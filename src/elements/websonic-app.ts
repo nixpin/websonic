@@ -65,6 +65,8 @@ export class WebSonicApp extends BaseElement {
           width: 100% !important;
         }
       }
+
+
     `,
   ];
   // Global Subsonic Client Context
