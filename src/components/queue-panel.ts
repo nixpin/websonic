@@ -44,6 +44,12 @@ export class QueuePanel extends BaseElement {
         display: none !important;
       }
     }
+
+    @media (max-width: 1140px) {
+      h2 {
+        font-size: 0.875rem;
+      }
+    }
   `];
 
   private _onStateChanged = (e: Event) => {

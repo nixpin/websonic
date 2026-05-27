@@ -66,6 +66,12 @@ export class LibraryPanel extends BaseElement {
     .fade-in { animation-name: fade-in; }
     .zoom-in { animation-name: zoom-in; }
     .duration-200 { animation-duration: 200ms; }
+
+    @media (max-width: 1140px) {
+      h2 {
+        font-size: 0.875rem;
+      }
+    }
   `];
 
     connectedCallback() {

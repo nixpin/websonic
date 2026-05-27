@@ -66,7 +66,23 @@ export class WebSonicApp extends BaseElement {
         }
       }
 
+      @media (min-width: 641px) and (max-width: 1140px) {
+        .content-area {
+          flex: 1;
+        }
 
+        .player-wrapper {
+          translate: 0 0;
+        }
+
+        library-panel {
+          width: 55% !important;
+        }
+
+        queue-panel {
+          width: 45% !important;
+        }
+      }
     `,
   ];
   // Global Subsonic Client Context
@@ -169,9 +185,7 @@ export class WebSonicApp extends BaseElement {
             <div
               class="player-wrapper absolute inset-0 flex items-center justify-center -translate-y-[29%] pointer-events-none"
             >
-              <div
-                class="player-wrapper-inner pointer-events-auto"
-              >
+              <div class="player-wrapper-inner pointer-events-auto">
                 <websonic-player-display
                   .isAuthenticated=${this.isAuthenticated}
                   @toggle-library=${this.toggleLibrary}
