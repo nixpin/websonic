@@ -1,10 +1,38 @@
-import { html } from 'lit';
+import { html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { BaseElement } from '../elements/base-element';
 import { PlayerService } from '../services/player-service';
 
 @customElement('websonic-amp-hardware')
 export class WebsonicAmpHardware extends BaseElement {
+  static styles = [
+    ...BaseElement.styles,
+    css`
+      @media (min-width: 641px) and (max-width: 1140px) {
+        [class*="w-\\[34px\\]"] {
+          width: calc(34 * 100vw / 1152) !important;
+        }
+        [class*="h-\\[60px\\]"] {
+          height: calc(60 * 100vw / 1152) !important;
+        }
+        [class*="w-\\[30px\\]"][class*="h-\\[30px\\]"] {
+          width: calc(30 * 100vw / 1152) !important;
+          height: calc(30 * 100vw / 1152) !important;
+        }
+        [class*="w-\\[70px\\]"][class*="h-\\[70px\\]"] {
+          width: calc(70 * 100vw / 1152) !important;
+          height: calc(70 * 100vw / 1152) !important;
+        }
+        [class*="w-\\[100px\\]"][class*="h-\\[100px\\]"] {
+          width: calc(100 * 100vw / 1152) !important;
+          height: calc(100 * 100vw / 1152) !important;
+        }
+        [class*="-inset-\\[15px\\]"] {
+          inset: calc(-15 * 100vw / 1152) !important;
+        }
+      }
+    `
+  ];
   @property({ type: Boolean }) isAuthenticated = false;
   @property({ type: Boolean }) isQueueOpen = false;
   @property({ type: Boolean }) isLibraryOpen = false;
@@ -56,7 +84,7 @@ export class WebsonicAmpHardware extends BaseElement {
 
   render() {
     return html`
-        <img src="/theme/amp.webp" class="w-full h-auto drop-shadow-[0_-5px_45px_rgba(0,0,0,0.9)]" alt="Amplifier">
+        <img src="/theme/amp.webp" class="block w-full h-auto drop-shadow-[0_-5px_45px_rgba(0,0,0,0.9)]" alt="Amplifier">
         
         <!-- Physical Logout Switch Hotspot (Over the 'POWER' toggle) -->
         ${this.isAuthenticated ? html`

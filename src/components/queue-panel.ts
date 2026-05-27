@@ -34,6 +34,22 @@ export class QueuePanel extends BaseElement {
     .dragging {
         opacity: 0.3;
     }
+
+    @media (hover: none) {
+      .group button {
+        display: flex !important;
+        opacity: 1 !important;
+      }
+      .group .group-hover\\:hidden {
+        display: none !important;
+      }
+    }
+
+    @media (max-width: 1140px) {
+      h2 {
+        font-size: 0.875rem;
+      }
+    }
   `];
 
   private _onStateChanged = (e: Event) => {
@@ -312,13 +328,14 @@ export class QueuePanel extends BaseElement {
 
                              <!-- Play/Index Button -->
                              <div class="relative w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center shrink-0">
-                                <span class="text-[9px] font-mono opacity-40 group-hover:hidden ${isCurrent ? 'hidden' : ''}">${index + 1}</span>
-                                ${isCurrent ? html`<div class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse group-hover:hidden"></div>` : ''}
-                                <button @click=${(e: Event) => this.handleJumpTo(index, e)} 
-                                        class="hidden group-hover:flex w-full h-full items-center justify-center text-[#a17c2f] hover:scale-110 transition-transform cursor-pointer" 
-                                        title="Play track">
-                                   ${ICONS.PLAY}
-                                </button>
+                                 <span class="text-[9px] font-mono opacity-40 group-hover:hidden ${isCurrent ? 'hidden' : ''}">${index + 1}</span>
+                                 ${isCurrent ? html`<div class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></div>` : ''}
+                                 ${!isCurrent ? html`
+                                 <button @click=${(e: Event) => this.handleJumpTo(index, e)} 
+                                         class="hidden group-hover:flex w-full h-full items-center justify-center text-[#a17c2f] hover:scale-110 transition-transform cursor-pointer" 
+                                         title="Play track">
+                                    ${ICONS.PLAY}
+                                 </button>` : ''}
                              </div>
                              
                              <div class="flex flex-col flex-1 min-w-0 py-0.5">
