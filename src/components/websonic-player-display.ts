@@ -57,6 +57,14 @@ export class WebSonicPlayerDisplay extends BaseElement {
     PlayerService.getInstance().setVolume(v);
   }
 
+  private _volumeTrackClick(e: MouseEvent) {
+    const track = e.currentTarget as HTMLElement;
+    const rect = track.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const vol = Math.round((x / rect.width) * 100);
+    PlayerService.getInstance().setVolume(Math.max(0, Math.min(100, vol)));
+  }
+
   private _emit(eventName: string) {
     this.dispatchEvent(new CustomEvent(eventName, { bubbles: true, composed: true }));
   }
@@ -394,7 +402,7 @@ export class WebSonicPlayerDisplay extends BaseElement {
             ${this.isAuthenticated ? html`
               <div class="mobile-vol-row">
                 <div class="vol-btn" @click=${this._volumeDown}>−</div>
-                <div class="vol-track"><div class="vol-fill" style="width: ${this.gain}%"></div></div>
+                <div class="vol-track" @click=${this._volumeTrackClick}><div class="vol-fill" style="width: ${this.gain}%"></div></div>
                 <div class="vol-btn" @click=${this._volumeUp}>+</div>
               </div>
 
