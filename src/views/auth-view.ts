@@ -117,6 +117,15 @@ export class AuthView extends BaseElement {
           outline: none;
           border-color: #d4af37;
         }
+
+        @media (max-width: 640px) {
+          .auth-view-wrapper {
+            min-height: 100vh;
+            height: auto;
+            padding: 16px;
+            justify-content: flex-start;
+          }
+        }
       </style>
 
       <div class="auth-view-wrapper">
